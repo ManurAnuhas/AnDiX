@@ -1,7 +1,7 @@
 /**
  * AnDiX Native High-Performance Music Engine
  * Uses Direct Progressive MP3 streams transcoded into Discord 48kHz Stereo PCM.
- * Guaranteed 100% audible playback without container crashes or silence drops.
+ * With libsodium-wrappers AEAD encryption & explicit Ready handshake.
  */
 
 const {
@@ -80,7 +80,7 @@ const musicManager = {
       song = {
         title: 'SoundCloud Track',
         url: targetUrl,
-        duration: 'Playing',
+        duration: 'Live',
         requestedBy: interaction.user.tag
       };
     } else {
@@ -105,7 +105,7 @@ const musicManager = {
         }
       }
 
-      // Search SoundCloud for direct track
+      // Search SoundCloud
       try {
         const scResults = await scClient.search(searchTerm, 'track');
         if (scResults && scResults.length > 0) {
@@ -140,6 +140,16 @@ const musicManager = {
         selfMute: false
       });
 
+      // Explicitly await UDP Handshake (Ready state) before accepting audio packets
+      try {
+        await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
+        logger.success(`Voice connection established and ready in guild: ${guildId}`);
+      } catch (connErr) {
+        logger.error('Voice connection handshake timeout:', connErr.message);
+        try { connection.destroy(); } catch (e) {}
+        throw new Error('Could not establish secure voice handshake with Discord. Please try again.');
+      }
+
       const player = createAudioPlayer();
 
       queue = {
@@ -154,7 +164,12 @@ const musicManager = {
       queues.set(guildId, queue);
 
       player.on(AudioPlayerStatus.Idle, () => {
+        logger.info(`AudioPlayer became Idle in guild ${guildId}`);
         musicManager.playNext(guildId);
+      });
+
+      player.on(AudioPlayerStatus.Playing, () => {
+        logger.success(`AudioPlayer status: PLAYING in guild ${guildId}`);
       });
 
       player.on('error', error => {
@@ -219,7 +234,7 @@ const musicManager = {
         logger.warn('Progressive stream fetch fallback:', scErr.message);
       }
 
-      // 2. Fallback to play-dl if progressive is unavailable
+      // 2. Fallback to play-dl
       if (!audioStream) {
         await initSoundCloud();
         const streamSource = await play.stream(song.streamUrl, {
@@ -255,7 +270,7 @@ const musicManager = {
       resource.volume?.setVolume(1.0);
       queue.player.play(resource);
 
-      logger.success(`🎵 Audio actively playing in Voice Channel: ${song.title}`);
+      logger.success(`🎵 Audio successfully piped to player for: ${song.title}`);
     } catch (err) {
       logger.error('Stream Pipeline Error:', err.message);
       musicManager.playNext(guildId);
