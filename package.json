@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "deploy": "node deploy-commands.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "postinstall": "node node_modules/ffmpeg-static/install.js"
   },
   "keywords": [
     "discord-bot",

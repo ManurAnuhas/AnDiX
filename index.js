@@ -8,12 +8,29 @@ const {
 const { DisTube } = require('distube');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
-const ffmpegStatic = require('ffmpeg-static');
+let ffmpegStatic = require('ffmpeg-static');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const logger = require('./src/utils/logger');
 const config = require('./config.json');
 const { startDashboard } = require('./src/dashboard/server');
+
+// Ensure ffmpeg binary exists on host
+try {
+  if (!ffmpegStatic || !fs.existsSync(ffmpegStatic)) {
+    logger.warn('FFmpeg binary not found at default path, running installer...');
+    const installScript = path.join(__dirname, 'node_modules', 'ffmpeg-static', 'install.js');
+    if (fs.existsSync(installScript)) {
+      execSync(`node "${installScript}"`, { stdio: 'inherit' });
+      delete require.cache[require.resolve('ffmpeg-static')];
+      ffmpegStatic = require('ffmpeg-static');
+      logger.success('FFmpeg static binary installed successfully!');
+    }
+  }
+} catch (e) {
+  logger.warn('Could not auto-install ffmpeg-static:', e.message);
+}
 
 // Initialize Discord Client with required Gateway Intents
 const client = new Client({
@@ -57,8 +74,8 @@ client.distube
   .on('addSong', (queue, song) => {
     logger.info(`🎵 Added to queue: ${song.name}`);
   })
-  .on('error', (channel, error) => {
-    logger.error('DisTube Error:', error.message || error);
+  .on('error', (error, queue, song) => {
+    logger.error('DisTube Error Event:', error?.stack || error?.message || error);
   })
   .on('empty', queue => {
     logger.info('Voice channel is empty, leaving...');
@@ -68,6 +85,9 @@ client.distube
   })
   .on('finish', queue => {
     logger.info('Queue finished, bot will leave soon.');
+  })
+  .on('ffmpegDebug', (debug) => {
+    logger.info(`FFmpeg debug: ${debug}`);
   });
 
 client.commands = new Collection();
