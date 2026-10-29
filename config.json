@@ -49,9 +49,12 @@
   },
   "saas": {
     "productName": "AnDiX Pro Discord Management Suite",
+    "freeTrialMode": true,
     "pricing": {
-      "setupFeeLkr": 2000,
-      "monthlyFeeLkr": 500
+      "setupFeeLkr": 0,
+      "monthlyFeeLkr": 0,
+      "originalSetupFeeLkr": 2000,
+      "originalMonthlyFeeLkr": 500
     },
     "bankDetails": {
       "bankName": "Commercial Bank",

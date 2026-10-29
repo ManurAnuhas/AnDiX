@@ -32,6 +32,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   try {
     const passwordHash = await auth.hashPassword(password);
+    const isFreeMode = config.saas?.freeTrialMode === true;
     const user = db.createUser({
       fullName,
       email: email.toLowerCase().trim(),
@@ -40,12 +41,12 @@ app.post('/api/auth/register', async (req, res) => {
       discordServerName: discordServerName || '',
       role: 'client',
       subscription: {
-        status: 'pending_payment',
-        setupPaid: false,
-        monthlyFeeLkr: 500,
-        setupFeeLkr: 2000,
-        activatedAt: null,
-        expiresAt: null
+        status: isFreeMode ? 'active' : 'pending_payment',
+        setupPaid: isFreeMode,
+        monthlyFeeLkr: 0,
+        setupFeeLkr: 0,
+        activatedAt: isFreeMode ? Date.now() : null,
+        expiresAt: isFreeMode ? (Date.now() + 60 * 24 * 60 * 60 * 1000) : null
       }
     });
 
@@ -164,3 +165,4 @@ app.post('/api/admin/payments/:id/reject', auth.requireAdmin, (req, res) => {
 });
 
 module.exports = app;
+
