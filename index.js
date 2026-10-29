@@ -1,4 +1,7 @@
 require('dotenv').config();
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+process.env.FFMPEG_PATH = ffmpegInstaller.path;
+
 const {
   Client,
   GatewayIntentBits,

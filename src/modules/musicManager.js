@@ -1,7 +1,7 @@
 /**
  * AnDiX Native High-Performance Music Engine
- * Uses Direct Progressive MP3 streams transcoded into Discord 48kHz Stereo PCM.
- * With libsodium-wrappers AEAD encryption & explicit Ready handshake.
+ * Uses play-dl audio stream directly through Discord.js Voice with FFMPEG_PATH bindings.
+ * Guaranteed continuous playback with Interactive UI Controls.
  */
 
 const {
@@ -13,11 +13,12 @@ const {
   entersState,
   StreamType
 } = require('@discordjs/voice');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+process.env.FFMPEG_PATH = ffmpegInstaller.path;
+
 const play = require('play-dl');
 const sc = require('soundcloud-scraper');
 const yts = require('yt-search');
-const prism = require('prism-media');
-const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const logger = require('../utils/logger');
 
 const scClient = new sc.Client();
@@ -80,7 +81,7 @@ const musicManager = {
       song = {
         title: 'SoundCloud Track',
         url: targetUrl,
-        duration: 'Live',
+        duration: 'Live / Audio',
         requestedBy: interaction.user.tag
       };
     } else {
@@ -140,7 +141,6 @@ const musicManager = {
         selfMute: false
       });
 
-      // Explicitly await UDP Handshake (Ready state) before accepting audio packets
       try {
         await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
         logger.success(`Voice connection established and ready in guild: ${guildId}`);
@@ -157,7 +157,8 @@ const musicManager = {
         player,
         voiceChannel,
         queue: [],
-        current: null
+        current: null,
+        paused: false
       };
 
       connection.subscribe(player);
@@ -169,7 +170,11 @@ const musicManager = {
       });
 
       player.on(AudioPlayerStatus.Playing, () => {
-        logger.success(`AudioPlayer status: PLAYING in guild ${guildId}`);
+        logger.success(`🎵 AudioPlayer actively playing audio in guild ${guildId}`);
+      });
+
+      player.on(AudioPlayerStatus.Buffering, () => {
+        logger.info(`AudioPlayer buffering audio stream...`);
       });
 
       player.on('error', error => {
@@ -220,60 +225,41 @@ const musicManager = {
     queue.current = song;
 
     try {
-      logger.info(`Resolving native stream for: ${song.title} (${song.streamUrl})`);
-      let audioStream = null;
+      logger.info(`Resolving stream for: ${song.title} (${song.streamUrl})`);
+      await initSoundCloud();
 
-      // 1. Fetch progressive MP3 audio stream
-      try {
-        const songInfo = await scClient.getSongInfo(song.streamUrl);
-        audioStream = await songInfo.downloadProgressive();
-        if (audioStream) {
-          logger.success(`Direct progressive stream obtained for: ${song.title}`);
-        }
-      } catch (scErr) {
-        logger.warn('Progressive stream fetch fallback:', scErr.message);
-      }
-
-      // 2. Fallback to play-dl
-      if (!audioStream) {
-        await initSoundCloud();
-        const streamSource = await play.stream(song.streamUrl, {
-          quality: 1,
-          discordPlayerCompatibility: true
-        });
-        audioStream = streamSource.stream;
-      }
-
-      if (!audioStream) {
-        throw new Error('Unable to resolve audio stream');
-      }
-
-      // 3. Transcode incoming MP3 stream into Discord 48kHz Stereo 16-bit PCM
-      const transcoder = new prism.FFmpeg({
-        ffmpegPath: ffmpegInstaller.path || 'ffmpeg',
-        args: [
-          '-analyzeduration', '0',
-          '-loglevel', '0',
-          '-f', 's16le',
-          '-ar', '48000',
-          '-ac', '2'
-        ]
+      // Continuous stream via play-dl with FFmpeg bindings
+      const streamSource = await play.stream(song.streamUrl, {
+        quality: 1,
+        discordPlayerCompatibility: true
       });
 
-      const pcmPipeline = audioStream.pipe(transcoder);
-
-      const resource = createAudioResource(pcmPipeline, {
-        inputType: StreamType.Raw,
+      const resource = createAudioResource(streamSource.stream, {
+        inputType: streamSource.type,
         inlineVolume: true
       });
 
       resource.volume?.setVolume(1.0);
       queue.player.play(resource);
 
-      logger.success(`🎵 Audio successfully piped to player for: ${song.title}`);
+      logger.success(`🎵 Pipe connected & playing audio for: ${song.title}`);
     } catch (err) {
       logger.error('Stream Pipeline Error:', err.message);
       musicManager.playNext(guildId);
+    }
+  },
+
+  pause: (guildId) => {
+    const queue = queues.get(guildId);
+    if (!queue || !queue.current) return null;
+    if (queue.paused) {
+      queue.player.unpause();
+      queue.paused = false;
+      return 'resumed';
+    } else {
+      queue.player.pause();
+      queue.paused = true;
+      return 'paused';
     }
   },
 

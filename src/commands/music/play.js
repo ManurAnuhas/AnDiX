@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { 
+  SlashCommandBuilder, 
+  EmbedBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ComponentType 
+} = require('discord.js');
 const musicManager = require('../../modules/musicManager');
 
 module.exports = {
@@ -28,19 +35,39 @@ module.exports = {
     try {
       const result = await musicManager.play(voiceChannel, query, interaction);
 
+      // Create Interactive Control Buttons
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('music_pause')
+          .setLabel('Pause / Resume')
+          .setEmoji('⏯️')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('music_skip')
+          .setLabel('Skip')
+          .setEmoji('⏭️')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('music_stop')
+          .setLabel('Stop')
+          .setEmoji('⏹️')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+      let responseMessage;
       if (result.status === 'playing') {
         const embed = new EmbedBuilder()
           .setColor('#00FFA3')
           .setTitle('🎶 Now Playing')
           .setDescription(`[**${result.song.title}**](${result.song.url})`)
           .addFields(
-            { name: '⏱️ Duration', value: result.song.duration || 'Live / Unknown', inline: true },
+            { name: '⏱️ Duration', value: result.song.duration || 'Live / Audio', inline: true },
             { name: '👤 Requested By', value: result.song.requestedBy, inline: true }
           )
           .setThumbnail(result.song.thumbnail)
-          .setFooter({ text: 'AnDiX High-Fidelity Music System' });
+          .setFooter({ text: 'AnDiX High-Fidelity Music System • Use buttons below to control' });
 
-        return interaction.editReply({ embeds: [embed] });
+        responseMessage = await interaction.editReply({ embeds: [embed], components: [row] });
       } else {
         const embed = new EmbedBuilder()
           .setColor('#9945FF')
@@ -52,8 +79,32 @@ module.exports = {
           )
           .setThumbnail(result.song.thumbnail);
 
-        return interaction.editReply({ embeds: [embed] });
+        responseMessage = await interaction.editReply({ embeds: [embed], components: [row] });
       }
+
+      // Component Collector for Interactive Buttons
+      const collector = responseMessage.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        time: 300_000 // 5 minutes active buttons
+      });
+
+      collector.on('collect', async i => {
+        if (!i.member.voice?.channel || i.member.voice.channel.id !== voiceChannel.id) {
+          return i.reply({ content: '❌ You must be in the same voice channel to use these controls!', ephemeral: true });
+        }
+
+        if (i.customId === 'music_pause') {
+          const state = musicManager.pause(interaction.guildId);
+          await i.reply({ content: state === 'paused' ? '⏸️ Music paused.' : '▶️ Music resumed.', ephemeral: true });
+        } else if (i.customId === 'music_skip') {
+          const skipped = musicManager.skip(interaction.guildId);
+          await i.reply({ content: skipped ? '⏭️ Track skipped!' : 'ℹ️ No track to skip.', ephemeral: true });
+        } else if (i.customId === 'music_stop') {
+          musicManager.stop(interaction.guildId);
+          await i.reply({ content: '⏹️ Playback stopped and queue cleared.', ephemeral: true });
+        }
+      });
+
     } catch (err) {
       return interaction.editReply({
         content: `❌ ${err.message || 'Error occurred while searching or playing the track.'}`
@@ -61,4 +112,3 @@ module.exports = {
     }
   }
 };
-
