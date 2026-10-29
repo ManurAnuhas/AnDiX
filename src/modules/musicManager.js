@@ -43,7 +43,7 @@ const musicManager = {
             duration: videoData.timestamp || 'Unknown',
             thumbnail: videoData.thumbnail || videoData.image,
             requestedBy: interaction.user.tag,
-            searchTerm: videoData.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
+            searchTerm: videoData.title.replace(/[\[\(].*?[\]\)]/g, '').replace(/official|music|video|audio|lyrics/gi, '').trim()
           };
         }
       } else {
@@ -58,7 +58,7 @@ const musicManager = {
             duration: top.timestamp || top.duration?.toString() || 'Unknown',
             thumbnail: top.thumbnail || top.image,
             requestedBy: interaction.user.tag,
-            searchTerm: top.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
+            searchTerm: top.title.replace(/[\[\(].*?[\]\)]/g, '').replace(/official|music|video|audio|lyrics/gi, '').trim()
           };
         }
       }
@@ -145,20 +145,29 @@ const musicManager = {
 
     try {
       logger.info(`Resolving audio stream for: ${song.title}`);
-      
-      const scSearch = await scClient.search(song.searchTerm || song.title, 'track');
-      let progressiveStream = null;
+      let audioStream = null;
 
-      if (scSearch && scSearch.length > 0) {
-        const songInfo = await scClient.getSongInfo(scSearch[0].url);
-        progressiveStream = await songInfo.downloadProgressive();
+      // Search SoundCloud candidates
+      const scCandidates = await scClient.search(song.searchTerm || song.title, 'track');
+
+      for (const track of scCandidates) {
+        try {
+          const songInfo = await scClient.getSongInfo(track.url);
+          audioStream = await songInfo.downloadProgressive();
+          if (audioStream) {
+            logger.success(`Found active stream from: ${track.url}`);
+            break;
+          }
+        } catch (err) {
+          // Private track or geo-restricted; silently try next candidate
+        }
       }
 
-      if (!progressiveStream) {
-        throw new Error('Could not download audio stream from provider');
+      if (!audioStream) {
+        throw new Error('Could not find a playable public audio stream');
       }
 
-      // Convert stream to Discord 48kHz Stereo PCM via FFmpeg
+      // Transcode via FFmpeg into Discord 48kHz Stereo PCM
       const transcoder = new prism.FFmpeg({
         ffmpegPath: ffmpegPath,
         args: [
@@ -170,7 +179,7 @@ const musicManager = {
         ]
       });
 
-      const audioPipeline = progressiveStream.pipe(transcoder);
+      const audioPipeline = audioStream.pipe(transcoder);
 
       const resource = createAudioResource(audioPipeline, {
         inputType: StreamType.Raw,
