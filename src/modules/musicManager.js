@@ -6,11 +6,10 @@ const {
   VoiceConnectionStatus,
   entersState
 } = require('@discordjs/voice');
+const yts = require('yt-search');
 const play = require('play-dl');
 const logger = require('../utils/logger');
 
-// Store active guild music queues
-// guildId -> { connection, player, queue: [], current: null, loop: false }
 const queues = new Map();
 
 const musicManager = {
@@ -19,48 +18,32 @@ const musicManager = {
   play: async (voiceChannel, query, interaction) => {
     const guildId = voiceChannel.guild.id;
     let queue = queues.get(guildId);
-
-    // Search song via play-dl (YouTube, Spotify, SoundCloud)
     let song = null;
     const cleanQuery = query.trim();
 
     try {
-      if (cleanQuery.includes('spotify.com/')) {
-        if (play.is_expired()) {
-          await play.refreshToken();
-        }
-        const spData = await play.spotify(cleanQuery);
-        if (spData && (spData.type === 'track' || spData.name)) {
-          const searchTitle = `${spData.name} ${spData.artists?.[0]?.name || ''}`.trim();
-          const searched = await play.search(searchTitle, { limit: 1, source: { youtube: 'video' } });
-          if (searched.length > 0) {
-            song = {
-              title: spData.name,
-              url: searched[0].url,
-              duration: searched[0].durationRaw || 'Unknown',
-              thumbnail: spData.thumbnail?.url || searched[0].thumbnails?.[0]?.url,
-              requestedBy: interaction.user.tag
-            };
-          }
-        }
-      } else if (play.yt_validate(cleanQuery) === 'video') {
-        // Direct YouTube URL
-        const info = await play.video_info(cleanQuery);
-        if (info && info.video_details) {
-          song = {
-            title: info.video_details.title,
-            url: info.video_details.url,
-            duration: info.video_details.durationRaw,
-            thumbnail: info.video_details.thumbnails?.[0]?.url,
-            requestedBy: interaction.user.tag
-          };
-        }
-      } else {
-        // Standard text search (search both video and general)
-        let searched = await play.search(cleanQuery, { limit: 1, source: { youtube: 'video' } });
-        if (!searched || searched.length === 0) {
-          searched = await play.search(cleanQuery, { limit: 1 });
-        }
+      // 1. Robust Search via yt-search (No HPE_HEADER_OVERFLOW error)
+      const searchResult = await yts(cleanQuery);
+      const videos = searchResult?.videos || [];
+
+      if (videos.length > 0) {
+        const top = videos[0];
+        song = {
+          title: top.title,
+          url: top.url,
+          duration: top.timestamp || top.duration?.toString() || 'Unknown',
+          thumbnail: top.thumbnail || top.image,
+          requestedBy: interaction.user.tag
+        };
+      }
+    } catch (err) {
+      logger.error('yt-search error:', err);
+    }
+
+    // Fallback: If yt-search failed, try play-dl
+    if (!song) {
+      try {
+        const searched = await play.search(cleanQuery, { limit: 1 });
         if (searched && searched.length > 0) {
           song = {
             title: searched[0].title,
@@ -70,16 +53,16 @@ const musicManager = {
             requestedBy: interaction.user.tag
           };
         }
+      } catch (err) {
+        logger.error('play-dl search fallback error:', err);
       }
-    } catch (err) {
-      logger.error('Music Search Error:', err);
     }
 
     if (!song) {
-      throw new Error('No song found for your query.');
+      throw new Error('No song found for your query. Please try another title or direct link.');
     }
 
-    // Initialize queue if not present
+    // Initialize Voice Connection & Player
     if (!queue) {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
@@ -141,10 +124,10 @@ const musicManager = {
       setTimeout(() => {
         const q = queues.get(guildId);
         if (q && !q.current && q.queue.length === 0) {
-          q.connection.destroy();
+          try { q.connection.destroy(); } catch(e){}
           queues.delete(guildId);
         }
-      }, 120000); // Leave VC after 2 minutes of idle
+      }, 120000);
       return;
     }
 
@@ -176,11 +159,10 @@ const musicManager = {
     queue.queue = [];
     queue.current = null;
     queue.player.stop();
-    queue.connection.destroy();
+    try { queue.connection.destroy(); } catch(e){}
     queues.delete(guildId);
     return true;
   }
 };
 
 module.exports = musicManager;
-
