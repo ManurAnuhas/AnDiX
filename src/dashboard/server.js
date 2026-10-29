@@ -136,6 +136,98 @@ function createServer(client) {
     });
   });
 
+  // Discord OAuth2 Initiate
+  app.get('/api/auth/discord', (req, res) => {
+    const clientId = process.env.CLIENT_ID || '1565283272072761424';
+    const host = req.get('host');
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/discord/callback`);
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email%20guilds`;
+    res.redirect(discordAuthUrl);
+  });
+
+  // Discord OAuth2 Callback
+  app.get('/api/auth/discord/callback', async (req, res) => {
+    const { code } = req.query;
+    if (!code) return res.redirect('/auth.html?error=no_code');
+
+    const clientId = process.env.CLIENT_ID || '1565283272072761424';
+    const clientSecret = process.env.CLIENT_SECRET || 'EOWs4HJ_PIuHdIR-0rnQ0zzTN8U-zi58';
+    const host = req.get('host');
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const redirectUri = `${protocol}://${host}/api/auth/discord/callback`;
+
+    try {
+      const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'authorization_code',
+          code: code.toString(),
+          redirect_uri: redirectUri
+        })
+      });
+
+      const tokenData = await tokenRes.json();
+      if (!tokenData.access_token) {
+        logger.error('Discord OAuth Token Error:', tokenData);
+        return res.redirect('/auth.html?error=token_failed');
+      }
+
+      const userRes = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      });
+      const discordUser = await userRes.json();
+
+      const email = discordUser.email || `${discordUser.id}@discord.user`;
+      let user = db.findUserByEmail(email);
+
+      if (!user) {
+        const isFreeMode = config.saas?.freeTrialMode === true;
+        user = db.createUser({
+          fullName: discordUser.global_name || discordUser.username,
+          email: email.toLowerCase(),
+          passwordHash: 'DISCORD_OAUTH_ACCOUNT',
+          discordTag: `${discordUser.username}#${discordUser.discriminator || '0'}`,
+          discordServerName: '',
+          role: 'client',
+          subscription: {
+            status: isFreeMode ? 'active' : 'pending_payment',
+            setupPaid: isFreeMode,
+            monthlyFeeLkr: 0,
+            setupFeeLkr: 0,
+            activatedAt: isFreeMode ? Date.now() : null,
+            expiresAt: isFreeMode ? (Date.now() + 60 * 24 * 60 * 60 * 1000) : null
+          }
+        });
+      }
+
+      const jwtToken = auth.generateToken(user);
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Logging in...</title></head>
+        <body style="background:#090a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+          <div style="text-align:center;">
+            <h2>✔ Discord Login Successful!</h2>
+            <p>Redirecting to your Dashboard...</p>
+          </div>
+          <script>
+            localStorage.setItem('andix_token', '${jwtToken}');
+            localStorage.setItem('andix_user', JSON.stringify(${JSON.stringify(user)}));
+            window.location.href = '/client.html';
+          </script>
+        </body>
+        </html>
+      `);
+    } catch (err) {
+      logger.error('OAuth Callback Exception:', err);
+      res.redirect('/auth.html?error=server_error');
+    }
+  });
+
   // ==========================================
   // 2. CLIENT DASHBOARD APIS (Protected)
   // ==========================================
