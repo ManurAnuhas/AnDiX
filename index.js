@@ -52,14 +52,13 @@ const client = new Client({
   ]
 });
 
-// Initialize DisTube with SoundCloud & yt-dlp plugins + explicit ffmpeg path
+// Initialize DisTube with SoundCloud plugin + explicit ffmpeg path
 client.distube = new DisTube(client, {
   ffmpeg: {
     path: ffmpegStatic || 'ffmpeg',
   },
   plugins: [
-    new SoundCloudPlugin(),
-    new YtDlpPlugin({ update: false })
+    new SoundCloudPlugin()
   ],
   emitNewSongOnly: true,
   joinNewVoiceChannel: true,
