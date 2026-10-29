@@ -4,88 +4,62 @@ const {
   createAudioResource,
   AudioPlayerStatus,
   VoiceConnectionStatus,
-  entersState,
-  StreamType
+  entersState
 } = require('@discordjs/voice');
 const yts = require('yt-search');
 const play = require('play-dl');
 const logger = require('../utils/logger');
 
 const queues = new Map();
+let soundCloudInitialized = false;
 
-function extractVideoId(url) {
-  if (!url) return null;
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-  return match ? match[1] : null;
+async function initSoundCloud() {
+  if (!soundCloudInitialized) {
+    try {
+      const client_id = await play.getFreeClientID();
+      await play.setToken({ soundcloud: { client_id } });
+      soundCloudInitialized = true;
+      logger.info('SoundCloud client token initialized successfully.');
+    } catch (e) {
+      logger.warn('SoundCloud init warning:', e.message);
+    }
+  }
 }
 
 const musicManager = {
   getQueue: (guildId) => queues.get(guildId),
 
   play: async (voiceChannel, query, interaction) => {
+    await initSoundCloud();
     const guildId = voiceChannel.guild.id;
     let queue = queues.get(guildId);
     let song = null;
     const cleanQuery = query.trim();
 
+    // 1. YouTube metadata search (for title, duration, thumbnail)
     try {
-      const videoId = extractVideoId(cleanQuery);
+      const searchResult = await yts(cleanQuery);
+      const topVideo = searchResult?.videos?.[0];
 
-      if (videoId) {
-        // Direct YouTube Link (youtube.com / youtu.be)
-        const videoData = await yts({ videoId });
-        if (videoData) {
-          song = {
-            title: videoData.title,
-            url: videoData.url,
-            duration: videoData.timestamp || 'Unknown',
-            thumbnail: videoData.thumbnail || videoData.image,
-            requestedBy: interaction.user.tag
-          };
-        }
-      } else {
-        // Text Search
-        const searchResult = await yts(cleanQuery);
-        const videos = searchResult?.videos || [];
-
-        if (videos.length > 0) {
-          const top = videos[0];
-          song = {
-            title: top.title,
-            url: top.url,
-            duration: top.timestamp || top.duration?.toString() || 'Unknown',
-            thumbnail: top.thumbnail || top.image,
-            requestedBy: interaction.user.tag
-          };
-        }
+      if (topVideo) {
+        song = {
+          title: topVideo.title,
+          url: topVideo.url,
+          duration: topVideo.timestamp || 'Unknown',
+          thumbnail: topVideo.thumbnail || topVideo.image,
+          requestedBy: interaction.user.tag,
+          cleanTitle: topVideo.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
+        };
       }
-    } catch (err) {
-      logger.error('yt-search resolution error:', err);
-    }
-
-    // Fallback: If yt-search failed, try play-dl
-    if (!song) {
-      try {
-        const searched = await play.search(cleanQuery, { limit: 1 });
-        if (searched && searched.length > 0) {
-          song = {
-            title: searched[0].title,
-            url: searched[0].url,
-            duration: searched[0].durationRaw || 'Unknown',
-            thumbnail: searched[0].thumbnails?.[0]?.url,
-            requestedBy: interaction.user.tag
-          };
-        }
-      } catch (err) {
-        logger.error('play-dl fallback error:', err);
-      }
+    } catch (e) {
+      logger.error('Metadata search error:', e);
     }
 
     if (!song) {
-      throw new Error('No song found for your query. Please provide a valid song name or YouTube link.');
+      throw new Error('No song found for your query. Please provide a song name or link.');
     }
 
-    // Initialize Voice Connection & Audio Player
+    // 2. Initialize Voice Connection
     if (!queue) {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
@@ -112,7 +86,7 @@ const musicManager = {
       });
 
       player.on('error', error => {
-        logger.error(`Player error in guild ${guildId}:`, error);
+        logger.error(`Music player error in guild ${guildId}:`, error);
         musicManager.playNext(guildId);
       });
 
@@ -123,7 +97,7 @@ const musicManager = {
             entersState(connection, VoiceConnectionStatus.Connecting, 5_000)
           ]);
         } catch (e) {
-          try { connection.destroy(); } catch(err){}
+          try { connection.destroy(); } catch (err) {}
           queues.delete(guildId);
         }
       });
@@ -148,7 +122,7 @@ const musicManager = {
       setTimeout(() => {
         const q = queues.get(guildId);
         if (q && !q.current && q.queue.length === 0) {
-          try { q.connection.destroy(); } catch(e){}
+          try { q.connection.destroy(); } catch (e) {}
           queues.delete(guildId);
         }
       }, 120000);
@@ -158,17 +132,46 @@ const musicManager = {
     const song = queue.queue.shift();
     queue.current = song;
 
+    let stream = null;
+
+    // Strategy 1: Fast & Clean SoundCloud Audio Stream (Bypasses YouTube 429 Bot Check)
     try {
-      // Stream audio with fallback
-      const stream = await play.stream(song.url, { quality: 2 });
+      const scSearch = await play.search(song.cleanTitle || song.title, {
+        source: { soundcloud: 'tracks' },
+        limit: 1
+      });
+
+      if (scSearch && scSearch.length > 0) {
+        stream = await play.stream(scSearch[0].url);
+      }
+    } catch (e) {
+      logger.warn('SoundCloud stream attempt failed, attempting fallback...');
+    }
+
+    // Strategy 2: Direct YouTube Stream fallback
+    if (!stream) {
+      try {
+        stream = await play.stream(song.url);
+      } catch (e) {
+        logger.error('YouTube direct stream error:', e.message);
+      }
+    }
+
+    if (!stream) {
+      logger.error(`Could not stream audio for track: ${song.title}`);
+      return musicManager.playNext(guildId);
+    }
+
+    try {
       const resource = createAudioResource(stream.stream, {
         inputType: stream.type,
         inlineVolume: true
       });
-      resource.volume.setVolume(1.0);
+      resource.volume?.setVolume(1.0);
       queue.player.play(resource);
+      logger.success(`Playing audio: ${song.title}`);
     } catch (err) {
-      logger.error('Stream play error:', err);
+      logger.error('Audio play error:', err);
       musicManager.playNext(guildId);
     }
   },
@@ -186,7 +189,7 @@ const musicManager = {
     queue.queue = [];
     queue.current = null;
     queue.player.stop();
-    try { queue.connection.destroy(); } catch(e){}
+    try { queue.connection.destroy(); } catch (e) {}
     queues.delete(guildId);
     return true;
   }
