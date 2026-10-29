@@ -63,10 +63,10 @@ app.post('/api/auth/login', async (req, res) => {
   const cleanEmail = (email || '').toLowerCase().trim();
 
   // Admin Login
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@andix.bot').toLowerCase().trim();
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const adminPass = process.env.ADMIN_PASSWORD;
 
-  if (cleanEmail === adminEmail && password === adminPass) {
+  if (adminEmail && adminPass && cleanEmail === adminEmail && password === adminPass) {
     const adminUser = { id: 'admin_master', email: adminEmail, fullName: 'AnDiX Master Admin', role: 'admin' };
     const token = auth.generateToken(adminUser);
     return res.json({ success: true, token, user: adminUser });

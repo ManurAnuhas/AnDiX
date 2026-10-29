@@ -44,8 +44,7 @@
   },
   "dashboard": {
     "enabled": true,
-    "port": 3000,
-    "password": "andi"
+    "port": 3000
   },
   "saas": {
     "productName": "AnDiX Pro Discord Management Suite",

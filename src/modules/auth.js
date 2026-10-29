@@ -2,7 +2,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./database');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'andix_secure_jwt_token_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.warn('⚠️ WARNING: JWT_SECRET environment variable is not defined! Using fallback session key.');
+}
+const ACTIVE_JWT_SECRET = JWT_SECRET || 'andix_fallback_secret_must_set_env';
 
 const auth = {
   hashPassword: async (password) => {
@@ -21,14 +25,14 @@ const auth = {
         fullName: user.fullName,
         role: user.role || 'client'
       },
-      JWT_SECRET,
+      ACTIVE_JWT_SECRET,
       { expiresIn: '7d' }
     );
   },
 
   verifyToken: (token) => {
     try {
-      return jwt.verify(token, JWT_SECRET);
+      return jwt.verify(token, ACTIVE_JWT_SECRET);
     } catch (err) {
       return null;
     }

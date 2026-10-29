@@ -94,10 +94,10 @@ function createServer(client) {
     const cleanEmail = email.toLowerCase().trim();
 
     // 1. Check Master Admin Login
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@andix.bot').toLowerCase().trim();
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+    const adminPass = process.env.ADMIN_PASSWORD;
 
-    if (cleanEmail === adminEmail && password === adminPass) {
+    if (adminEmail && adminPass && cleanEmail === adminEmail && password === adminPass) {
       const adminUser = {
         id: 'admin_master',
         email: adminEmail,
@@ -138,7 +138,10 @@ function createServer(client) {
 
   // Discord OAuth2 Initiate
   app.get('/api/auth/discord', (req, res) => {
-    const clientId = process.env.CLIENT_ID || '1565283272072761424';
+    const clientId = process.env.CLIENT_ID;
+    if (!clientId) {
+      return res.status(500).send('Discord OAuth error: CLIENT_ID is not configured in environment variables.');
+    }
     const host = req.get('host');
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/discord/callback`);
@@ -151,8 +154,12 @@ function createServer(client) {
     const { code } = req.query;
     if (!code) return res.redirect('/auth.html?error=no_code');
 
-    const clientId = process.env.CLIENT_ID || '1565283272072761424';
-    const clientSecret = process.env.CLIENT_SECRET || 'EOWs4HJ_PIuHdIR-0rnQ0zzTN8U-zi58';
+    const clientId = process.env.CLIENT_ID;
+    const clientSecret = process.env.CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      logger.error('Discord OAuth not configured: CLIENT_ID or CLIENT_SECRET missing in environment variables.');
+      return res.redirect('/auth.html?error=oauth_not_configured');
+    }
     const host = req.get('host');
     const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const redirectUri = `${protocol}://${host}/api/auth/discord/callback`;
