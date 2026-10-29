@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnDiX • Client Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { height: auto; min-height: 100vh; }
+    .dash-nav {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .dash-brand {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dash-brand span { color: var(--stream-red); }
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .nav-user strong { color: var(--text-main); }
+    .dash-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .page-sub { color: var(--text-muted); font-size: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .stat-icon.purple { background: rgba(153,69,255,0.15); color: var(--primary); }
+    .stat-icon.green { background: rgba(0,255,163,0.12); color: var(--success); }
+    .stat-icon.red { background: rgba(255,0,85,0.12); color: var(--stream-red); }
+    .stat-icon.blue { background: rgba(0,200,255,0.12); color: var(--info); }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .stat-value { font-family: var(--font-heading); font-size: 20px; color: var(--text-main); }
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-head h3 {
+      font-family: var(--font-sub);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head h3 i { color: var(--primary); }
+    .section-body { padding: 24px; }
+    .sub-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sub-status-badge.active { background: rgba(0,255,163,0.15); color: var(--success); border: 1px solid rgba(0,255,163,0.3); }
+    .sub-status-badge.pending { background: rgba(255,184,0,0.15); color: var(--warning); border: 1px solid rgba(255,184,0,0.3); }
+    .sub-status-badge.expired { background: rgba(255,51,102,0.12); color: var(--danger); border: 1px solid rgba(255,51,102,0.3); }
+    .sub-status-badge.inactive { background: rgba(140,147,168,0.12); color: var(--text-muted); border: 1px solid var(--border-color); }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .info-item { display: flex; flex-direction: column; gap: 4px; }
+    .info-item label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .info-item span { font-size: 14px; color: var(--text-main); }
+    .bank-detail-box {
+      background: rgba(153,69,255,0.05);
+      border: 1px solid rgba(153,69,255,0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .bank-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    .bank-row:last-child { border-bottom: none; }
+    .bank-row label { color: var(--text-muted); }
+    .bank-row span { color: var(--text-main); font-weight: 600; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 13px; color: var(--text-muted); }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-size: 14px;
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+    .form-group select option { background: var(--bg-card); }
+    .slip-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: none;
+      margin-top: 8px;
+    }
+    .payment-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .payment-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .payment-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--text-main);
+    }
+    .payment-table tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge.success { background: rgba(0,255,163,0.15); color: var(--success); }
+    .badge.warning { background: rgba(255,184,0,0.15); color: var(--warning); }
+    .badge.danger { background: rgba(255,51,102,0.12); color: var(--danger); }
+    .badge.info { background: rgba(0,200,255,0.12); color: var(--info); }
+    .locked-overlay {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .locked-overlay i { font-size: 40px; color: var(--text-dim); margin-bottom: 12px; display: block; }
+    .locked-overlay h4 { color: var(--text-main); margin-bottom: 8px; font-family: var(--font-sub); }
+    .form-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .info-grid { grid-template-columns: 1fr; }
+      .dash-nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="dash-nav">
+    <a href="index.html" class="dash-brand">AnDi<span>X</span></a>
+    <div class="nav-user">
+      <span>Welcome, <strong id="nav-username">...</strong></span>
+      <span id="nav-sub-badge" class="sub-status-badge inactive">Inactive</span>
+      <button class="btn btn-sm" onclick="logout()" style="background:rgba(255,51,102,0.15);color:var(--danger);border:1px solid rgba(255,51,102,0.3);">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toasts"></div>
+
+  <div class="dash-main">
+    <div>
+      <div class="page-title">🎮 Client Dashboard</div>
+      <div class="page-sub">Manage your AnDiX bot subscription and server</div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid-3">
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-robot"></i></div>
+        <div>
+          <div class="stat-label">Subscription</div>
+          <div class="stat-value" id="stat-status">—</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+        <div>
+          <div class="stat-label">Expires</div>
+          <div class="stat-value" id="stat-expiry">—</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-server"></i></div>
+        <div>
+          <div class="stat-label">Linked Server</div>
+          <div class="stat-value" id="stat-server">None</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment + Bank Details -->
+    <div class="grid-2">
+
+      <!-- Upload Payment -->
+      <div class="section-card">
+        <div class="section-head">
+          <h3><i class="fas fa-upload"></i> Submit Payment Slip</h3>
+        </div>
+        <div class="section-body">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+            Transfer to our bank account below and upload your slip for approval.
+          </p>
+          <div class="form-group">
+            <label>Payment Type</label>
+            <select id="pay-type">
+              <option value="setup">Initial Setup — LKR 2,000</option>
+              <option value="renewal">Monthly Renewal — LKR 500</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (LKR)</label>
+            <input type="number" id="pay-amount" placeholder="e.g. 2000" min="1">
+          </div>
+          <div class="form-group">
+            <label>Bank Slip Image</label>
+            <input type="file" id="slip-file" accept="image/*" onchange="previewSlip(event)">
+            <img id="slip-preview" class="slip-preview" alt="Slip Preview">
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="submitPayment()">
+            <i class="fas fa-paper-plane"></i> Submit for Approval
+          </button>
+        </div>
+      </div>
+
+      <!-- Bank Details -->
+      <div class="section-card">
+        <div class="section-head">
+          <h3><i class="fas fa-university"></i> Bank Details</h3>
+        </div>
+        <div class="section-body">
+          <div class="bank-detail-box" id="bank-details">
+            <div class="bank-row"><label>Account Name</label><span id="bank-name">Loading...</span></div>
+            <div class="bank-row"><label>Bank</label><span id="bank-bank">...</span></div>
+            <div class="bank-row"><label>Account No.</label><span id="bank-acc">...</span></div>
+            <div class="bank-row"><label>Branch</label><span id="bank-branch">...</span></div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;">
+            <p style="font-size:12px;color:var(--warning);">
+              <i class="fas fa-info-circle"></i>
+              <strong>Pricing:</strong><br>
+              • Initial Setup: <strong>LKR 2,000</strong> (one-time)<br>
+              • Monthly Renewal: <strong>LKR 500</strong>/month<br><br>
+              After transfer, upload your slip above. Admin will approve within 24h.
+            </p>
+          </div>
+          <div style="margin-top:12px;">
+            <a id="bot-invite-link" href="#" target="_blank" class="btn btn-secondary" style="width:100%;text-align:center;display:block;">
+              <i class="fab fa-discord"></i> Invite Bot to Your Server
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="section-card">
+      <div class="section-head">
+        <h3><i class="fas fa-history"></i> Payment History</h3>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="payment-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="payment-tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Server Management -->
+    <div class="section-card" id="server-mgmt-card">
+      <div class="section-head">
+        <h3><i class="fas fa-cogs"></i> Server Management</h3>
+        <span class="badge info" id="linked-server-badge">No Server Linked</span>
+      </div>
+      <div class="section-body" id="server-mgmt-body">
+        <div class="locked-overlay" id="mgmt-locked">
+          <i class="fas fa-lock"></i>
+          <h4>Active Subscription Required</h4>
+          <p>Submit a payment and wait for approval to unlock server management features.</p>
+        </div>
+        <div id="mgmt-unlocked" style="display:none;">
+          <!-- Tabs -->
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-link')">Link Server</button>
+            <button class="tab-btn" onclick="switchTab('tab-setup')">Auto Setup</button>
+            <button class="tab-btn" onclick="switchTab('tab-stream')">Stream Alert</button>
+            <button class="tab-btn" onclick="switchTab('tab-announce')">Announce</button>
+          </div>
+
+          <!-- Tab: Link Server -->
+          <div id="tab-link" class="tab-panel active">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+              Enter your Discord Server ID to link it to your AnDiX subscription.
+            </p>
+            <div class="form-row">
+              <div class="form-group" style="margin:0;">
+                <label>Discord Server ID</label>
+                <input type="text" id="server-id-input" placeholder="e.g. 1234567890123456789">
+              </div>
+              <button class="btn btn-primary" onclick="linkServer()">
+                <i class="fas fa-link"></i> Link
+              </button>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+              <i class="fas fa-info-circle"></i> Right-click your server → Copy Server ID (enable Developer Mode in Discord settings first)
+            </p>
+          </div>
+
+          <!-- Tab: Auto Setup -->
+          <div id="tab-setup" class="tab-panel">
+            <div style="background:rgba(153,69,255,0.08);border:1px solid rgba(153,69,255,0.2);border-radius:10px;padding:20px;margin-bottom:16px;">
+              <h4 style="font-family:var(--font-sub);color:var(--primary);margin-bottom:8px;">
+                <i class="fas fa-magic"></i> 1-Click Server Architect
+              </h4>
+              <p style="font-size:13px;color:var(--text-muted);">
+                Automatically builds a complete gaming/streaming server with roles, categories, channels, and permissions in one click.
+              </p>
+              <ul style="font-size:12px;color:var(--text-muted);margin-top:8px;padding-left:16px;line-height:1.8;">
+                <li>7 Roles (Owner, Mod, Streamer, VIP, Subscriber, Member, Muted)</li>
+                <li>5 Categories (Info, Community, Gaming, Streaming, Staff)</li>
+                <li>17+ Channels (rules, announcements, general, stream-alerts, etc.)</li>
+              </ul>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="autoSetup()">
+              <i class="fas fa-magic"></i> Run 1-Click Server Setup
+            </button>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;">
+              ⚠️ Make sure the bot has Administrator permission in your server before running.
+            </p>
+          </div>
+
+          <!-- Tab: Stream Alert -->
+          <div id="tab-stream" class="tab-panel">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+              Broadcast a stream live alert to your Discord server.
+            </p>
+            <div class="grid-2" style="gap:12px;">
+              <div class="form-group"><label>Stream Title</label><input type="text" id="stream-title" placeholder="Now Streaming!"></div>
+              <div class="form-group"><label>Game</label><input type="text" id="stream-game" placeholder="Minecraft"></div>
+              <div class="form-group"><label>Platform</label>
+                <select id="stream-platform">
+                  <option>Twitch</option><option>YouTube</option><option>Facebook Gaming</option><option>Kick</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Stream URL</label><input type="text" id="stream-url" placeholder="https://twitch.tv/..."></div>
+              <div class="form-group"><label>Thumbnail URL (optional)</label><input type="text" id="stream-thumb" placeholder="https://..."></div>
+              <div class="form-group"><label>Ping Type</label>
+                <select id="stream-ping">
+                  <option value="everyone">@everyone</option>
+                  <option value="here">@here</option>
+                  <option value="role">Subscriber Role</option>
+                  <option value="none">No Ping</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="sendStreamAlert()">
+              <i class="fas fa-broadcast-tower"></i> Send Stream Alert
+            </button>
+          </div>
+
+          <!-- Tab: Announce -->
+          <div id="tab-announce" class="tab-panel">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+              Send a custom announcement to your server.
+            </p>
+            <div class="form-group"><label>Title</label><input type="text" id="ann-title" placeholder="Announcement Title"></div>
+            <div class="form-group"><label>Message</label><textarea id="ann-msg" rows="4" placeholder="Your message here..."></textarea></div>
+            <div class="grid-2" style="gap:12px;">
+              <div class="form-group"><label>Color</label>
+                <select id="ann-color">
+                  <option value="purple">Purple</option>
+                  <option value="red">Red</option>
+                  <option value="green">Green</option>
+                  <option value="blue">Blue</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Ping</label>
+                <select id="ann-ping">
+                  <option value="none">No Ping</option>
+                  <option value="everyone">@everyone</option>
+                  <option value="here">@here</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="sendAnnouncement()">
+              <i class="fas fa-bullhorn"></i> Send Announcement
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end dash-main -->
+
+<script>
+const API = '';
+let userData = null;
+let linkedServerId = null;
+
+// On load
+window.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('andix_token');
+  if (!token) return window.location.href = 'auth.html';
+  await loadProfile(token);
+  await loadPayments(token);
+  await loadBankDetails();
+});
+
+async function loadProfile(token) {
+  try {
+    const res = await fetch(`${API}/api/client/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    userData = data.user;
+    if (!userData) { logout(); return; }
+    renderProfile(userData);
+  } catch(e) {
+    showToast('Failed to load profile', 'error');
+  }
+}
+
+function renderProfile(user) {
+  document.getElementById('nav-username').textContent = user.fullName || user.email;
+  const sub = user.subscription || {};
+  const status = sub.status || 'inactive';
+
+  // Nav badge
+  const navBadge = document.getElementById('nav-sub-badge');
+  navBadge.className = `sub-status-badge ${status}`;
+  navBadge.innerHTML = `<i class="fas fa-circle" style="font-size:8px;"></i> ${status.toUpperCase()}`;
+
+  // Stats
+  document.getElementById('stat-status').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  if (sub.expiresAt) {
+    const exp = new Date(sub.expiresAt);
+    document.getElementById('stat-expiry').textContent = exp.toLocaleDateString('en-GB');
+  } else {
+    document.getElementById('stat-expiry').textContent = 'N/A';
+  }
+
+  linkedServerId = user.discordServerId || null;
+  if (linkedServerId) {
+    document.getElementById('stat-server').textContent = linkedServerId;
+    document.getElementById('linked-server-badge').textContent = `Linked: ${linkedServerId}`;
+    document.getElementById('server-id-input') && (document.getElementById('server-id-input').value = linkedServerId);
+  }
+
+  // Lock/unlock management
+  if (status === 'active') {
+    document.getElementById('mgmt-locked').style.display = 'none';
+    document.getElementById('mgmt-unlocked').style.display = 'block';
+  }
+}
+
+async function loadBankDetails() {
+  try {
+    const res = await fetch(`${API}/api/public/info`);
+    const data = await res.json();
+    const bank = data.bankDetails || data.bank || {};
+    document.getElementById('bank-name').textContent = bank.accountName || '—';
+    document.getElementById('bank-bank').textContent = bank.bankName || '—';
+    document.getElementById('bank-acc').textContent = bank.accountNumber || '—';
+    document.getElementById('bank-branch').textContent = bank.branch || '—';
+    const inviteUrl = data.botInviteUrl || data.botInviteLink || '#';
+    document.getElementById('bot-invite-link').href = inviteUrl;
+  } catch(e) {}
+}
+
+async function loadPayments(token) {
+  const tbody = document.getElementById('payment-tbody');
+  try {
+    const res = await fetch(`${API}/api/client/payments`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    // API returns array directly or wrapped
+    const payments = Array.isArray(data) ? data : (data.payments || []);
+    if (!payments.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">No payments yet. Submit your first payment above!</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = payments.map(p => {
+      const date = new Date(p.createdAt).toLocaleDateString('en-GB');
+      const statusClass = p.status === 'approved' ? 'success' : p.status === 'pending' ? 'warning' : 'danger';
+      const amount = p.amountLkr || p.amount || 0;
+      const typeLabel = (p.type === 'setup' || p.type === 'initial_setup') ? 'Initial Setup' : 'Monthly Renewal';
+      return `<tr>
+        <td>${date}</td>
+        <td>${typeLabel}</td>
+        <td>LKR ${Number(amount).toLocaleString()}</td>
+        <td><span class="badge ${statusClass}">${p.status}</span></td>
+        <td style="color:var(--text-muted);font-size:12px;">${p.adminNote || p.notes || '—'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Failed to load payments</td></tr>`;
+  }
+}
+
+function previewSlip(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('slip-preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitPayment() {
+  const token = localStorage.getItem('andix_token');
+  const type = document.getElementById('pay-type').value;
+  const amount = document.getElementById('pay-amount').value;
+  const file = document.getElementById('slip-file').files[0];
+  if (!amount || !file) return showToast('Please fill amount and upload slip', 'error');
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const slipBase64 = e.target.result;
+    try {
+      const res = await fetch(`${API}/api/client/submit-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ type, amountLkr: Number(amount), slipBase64 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Payment submitted! Awaiting admin approval.', 'success');
+        loadPayments(token);
+        document.getElementById('pay-amount').value = '';
+        document.getElementById('slip-file').value = '';
+        document.getElementById('slip-preview').style.display = 'none';
+      } else {
+        showToast(data.message || 'Submission failed', 'error');
+      }
+    } catch(e) {
+      showToast('Error submitting payment', 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function linkServer() {
+  const token = localStorage.getItem('andix_token');
+  const serverId = document.getElementById('server-id-input').value.trim();
+  if (!serverId) return showToast('Enter a Server ID', 'error');
+  try {
+    const res = await fetch(`${API}/api/client/link-server`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ serverId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      linkedServerId = serverId;
+      document.getElementById('stat-server').textContent = serverId;
+      document.getElementById('linked-server-badge').textContent = `Linked: ${serverId}`;
+      showToast('Server linked successfully!', 'success');
+    } else {
+      showToast(data.message || 'Failed to link server', 'error');
+    }
+  } catch(e) {
+    showToast('Error linking server', 'error');
+  }
+}
+
+async function autoSetup() {
+  const token = localStorage.getItem('andix_token');
+  if (!linkedServerId) return showToast('Link a server first!', 'error');
+  if (!confirm('This will create roles, categories, and channels in your server. Continue?')) return;
+  try {
+    const res = await fetch(`${API}/api/client/auto-setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ serverId: linkedServerId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Server setup complete! Check your Discord.', 'success');
+    } else {
+      showToast(data.message || 'Setup failed', 'error');
+    }
+  } catch(e) {
+    showToast('Error running setup', 'error');
+  }
+}
+
+async function sendStreamAlert() {
+  const token = localStorage.getItem('andix_token');
+  if (!linkedServerId) return showToast('Link a server first!', 'error');
+  const payload = {
+    title: document.getElementById('stream-title').value,
+    game: document.getElementById('stream-game').value,
+    platform: document.getElementById('stream-platform').value,
+    url: document.getElementById('stream-url').value,
+    thumbnail: document.getElementById('stream-thumb').value,
+    ping: document.getElementById('stream-ping').value
+  };
+  if (!payload.title || !payload.url) return showToast('Fill in title and URL', 'error');
+  try {
+    const res = await fetch(`${API}/api/guild/${linkedServerId}/stream-alert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) showToast('Stream alert sent!', 'success');
+    else showToast(data.message || 'Failed to send', 'error');
+  } catch(e) {
+    showToast('Error sending alert', 'error');
+  }
+}
+
+async function sendAnnouncement() {
+  const token = localStorage.getItem('andix_token');
+  if (!linkedServerId) return showToast('Link a server first!', 'error');
+  const payload = {
+    title: document.getElementById('ann-title').value,
+    message: document.getElementById('ann-msg').value,
+    color: document.getElementById('ann-color').value,
+    ping: document.getElementById('ann-ping').value
+  };
+  if (!payload.title || !payload.message) return showToast('Fill in title and message', 'error');
+  try {
+    const res = await fetch(`${API}/api/guild/${linkedServerId}/announcement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) showToast('Announcement sent!', 'success');
+    else showToast(data.message || 'Failed to send', 'error');
+  } catch(e) {
+    showToast('Error sending announcement', 'error');
+  }
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function logout() {
+  localStorage.removeItem('andix_token');
+  localStorage.removeItem('andix_user');
+  window.location.href = 'auth.html';
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toasts');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: 'check-circle', error: 'times-circle', info: 'info-circle', warning: 'exclamation-circle' };
+  toast.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+</script>
+</body>
+</html>

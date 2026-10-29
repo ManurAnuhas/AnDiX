@@ -1,0 +1,29 @@
+{
+  "name": "andix-bot",
+  "version": "2.0.0",
+  "description": "AnDiX — The Commercial All-in-One Discord Management, Security & Streaming Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "discord-bot",
+    "gaming",
+    "streaming",
+    "automod",
+    "anti-spam",
+    "stream-notifications"
+  ],
+  "author": "AnDi Streaming",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.4"
+  }
+}

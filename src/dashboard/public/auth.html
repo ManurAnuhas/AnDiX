@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnDiX • Account Portal & Checkout</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-wrapper">
+    <div class="auth-box card">
+      <div class="auth-header text-center">
+        <a href="index.html" class="auth-brand">
+          <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="AnDiX Logo">
+          <h2>AnDiX PORTAL</h2>
+        </a>
+        <p id="auth-subtitle">Sign in to manage your server or create a new client account</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tab-btn-login">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tab-btn-register">Register / Buy Access</button>
+      </div>
+
+      <!-- Error / Alert Banner -->
+      <div id="auth-alert" class="alert-box warning hidden" style="margin-bottom: 16px;">
+        <span id="auth-alert-text"></span>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="form-login" class="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="login-email" placeholder="name@example.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-login-submit">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> SIGN IN
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="auth-form hidden">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="reg-name" placeholder="Kamal Perera" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address *</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="reg-email" placeholder="kamal@gmail.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Discord Username / Tag</label>
+            <input type="text" id="reg-discord" placeholder="kamal#1234">
+          </div>
+          <div class="form-group">
+            <label>Discord Server Name</label>
+            <input type="text" id="reg-server-name" placeholder="Kamal Gaming Hub">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password *</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="reg-password" placeholder="At least 6 characters" required autocomplete="new-password">
+          </div>
+        </div>
+
+        <div class="pricing-summary-box">
+          <div class="summary-row">
+            <span>Setup Fee & Bot License:</span>
+            <strong>LKR 2,000</strong>
+          </div>
+          <div class="summary-row">
+            <span>Monthly Hosting & Maintenance:</span>
+            <span>LKR 500 / month</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-stream btn-block btn-lg" id="btn-register-submit">
+          <i class="fa-solid fa-bolt"></i> CREATE ACCOUNT & PROCEED TO PAYMENT
+        </button>
+      </form>
+
+      <div class="auth-footer text-center">
+        <a href="index.html" class="text-muted"><i class="fa-solid fa-arrow-left"></i> Back to Homepage</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabLogin = document.getElementById('tab-btn-login');
+    const tabRegister = document.getElementById('tab-btn-register');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+    const authAlert = document.getElementById('auth-alert');
+    const authAlertText = document.getElementById('auth-alert-text');
+    const authSubtitle = document.getElementById('auth-subtitle');
+
+    function showAlert(msg, isError = true) {
+      authAlertText.innerText = msg;
+      authAlert.className = isError ? 'alert-box warning' : 'alert-box success';
+      authAlert.classList.remove('hidden');
+    }
+
+    function switchMode(mode) {
+      authAlert.classList.add('hidden');
+      if (mode === 'register') {
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        formRegister.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+        authSubtitle.innerText = 'Create your client account to get your AnDiX bot access';
+      } else {
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        formLogin.classList.remove('hidden');
+        formRegister.classList.add('hidden');
+        authSubtitle.innerText = 'Sign in to manage your server or check subscription status';
+      }
+    }
+
+    tabLogin.addEventListener('click', () => switchMode('login'));
+    tabRegister.addEventListener('click', () => switchMode('register'));
+
+    // Check URL parameters (e.g. auth.html?signup=true)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signup') === 'true') {
+      switchMode('register');
+    }
+
+    // Handle Login
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authAlert.classList.add('hidden');
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const btn = document.getElementById('btn-login-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SIGNING IN...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem('andix_token', data.token);
+          localStorage.setItem('andix_user', JSON.stringify(data.user));
+
+          if (data.user.role === 'admin') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'client.html';
+          }
+        } else {
+          showAlert(data.error || 'Login failed');
+        }
+      } catch (err) {
+        showAlert('Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> SIGN IN';
+      }
+    });
+
+    // Handle Register
+    formRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authAlert.classList.add('hidden');
+
+      const fullName = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const discordTag = document.getElementById('reg-discord').value.trim();
+      const discordServerName = document.getElementById('reg-server-name').value.trim();
+
+      const btn = document.getElementById('btn-register-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> CREATING ACCOUNT...';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, password, discordTag, discordServerName })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem('andix_token', data.token);
+          localStorage.setItem('andix_user', JSON.stringify(data.user));
+          window.location.href = 'client.html';
+        } else {
+          showAlert(data.error || 'Registration failed');
+        }
+      } catch (err) {
+        showAlert('Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> CREATE ACCOUNT & PROCEED TO PAYMENT';
+      }
+    });
+  </script>
+</body>
+</html>
+

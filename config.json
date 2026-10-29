@@ -1,0 +1,69 @@
+{
+  "botName": "AnDiX",
+  "tagline": "The Ultimate All-in-One Discord Management, Security & Streaming Bot",
+  "prefix": "!",
+  "colors": {
+    "primary": "#8A2BE2",
+    "gaming": "#9945FF",
+    "streamLive": "#FF0055",
+    "success": "#00FFA3",
+    "warning": "#FFB800",
+    "danger": "#FF3366",
+    "info": "#00C8FF"
+  },
+  "automod": {
+    "enabled": true,
+    "maxMessagesPerInterval": 5,
+    "intervalSeconds": 4,
+    "duplicateMessageThreshold": 3,
+    "maxMentions": 4,
+    "blockDiscordInvites": true,
+    "autoTimeoutMinutes": 5,
+    "bannedWords": [
+      "discord.gg/",
+      "free nitro",
+      "free robux",
+      "steam gift",
+      "nitro steam",
+      "t.me/"
+    ]
+  },
+  "leveling": {
+    "enabled": true,
+    "minXp": 15,
+    "maxXp": 25,
+    "cooldownSeconds": 60
+  },
+  "streamer": {
+    "name": "AnDi Streamer",
+    "youtube": "https://youtube.com/@AnDiXGaming",
+    "twitch": "https://twitch.tv/andixgaming",
+    "kick": "https://kick.com/andixgaming",
+    "tiktok": "https://tiktok.com/@andixgaming",
+    "discord": ""
+  },
+  "dashboard": {
+    "enabled": true,
+    "port": 3000,
+    "password": "andi"
+  },
+  "saas": {
+    "productName": "AnDiX Pro Discord Management Suite",
+    "pricing": {
+      "setupFeeLkr": 2000,
+      "monthlyFeeLkr": 500
+    },
+    "bankDetails": {
+      "bankName": "Commercial Bank",
+      "accountName": "AnDiX Technologies",
+      "accountNumber": "8000123456",
+      "branch": "Colombo Main",
+      "instructions": "Please transfer LKR 2,000 (Initial Setup + 1st Month) and upload the receipt/screenshot below."
+    },
+    "contact": {
+      "whatsapp": "+94 77 123 4567",
+      "discord": "https://discord.gg/andix",
+      "email": "support@andix.bot"
+    }
+  }
+}
