@@ -5,26 +5,11 @@ const {
   Partials,
   Collection
 } = require('discord.js');
-const { DisTube } = require('distube');
-const { SoundCloudPlugin } = require('@distube/soundcloud');
-const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./src/utils/logger');
 const config = require('./config.json');
 const { startDashboard } = require('./src/dashboard/server');
-
-// Determine stable ffmpeg path (prefer @ffmpeg-installer to prevent SIGSEGV)
-let ffmpegPath = ffmpegInstaller.path;
-try {
-  if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
-    const ffmpegStatic = require('ffmpeg-static');
-    ffmpegPath = ffmpegStatic;
-  }
-} catch (e) {
-  ffmpegPath = 'ffmpeg';
-}
-logger.info(`FFmpeg binary active at: ${ffmpegPath}`);
 
 // Initialize Discord Client with required Gateway Intents
 const client = new Client({
@@ -34,7 +19,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent, // Required for AutoMod & XP
     GatewayIntentBits.GuildMembers,   // Required for Welcomer & AutoRole
     GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.GuildVoiceStates, // Required for Squad Temp Voice Channels
+    GatewayIntentBits.GuildVoiceStates, // Required for Squad Temp Voice Channels & Music
     GatewayIntentBits.GuildModeration   // Required for Ban / Moderation audit logs
   ],
   partials: [
@@ -45,48 +30,6 @@ const client = new Client({
     Partials.GuildMember
   ]
 });
-
-// Initialize DisTube with SoundCloud plugin + low-memory single-thread ffmpeg
-client.distube = new DisTube(client, {
-  ffmpeg: {
-    path: ffmpegPath || 'ffmpeg',
-    args: {
-      global: {
-        threads: '1',
-      }
-    }
-  },
-  plugins: [
-    new SoundCloudPlugin()
-  ],
-  emitNewSongOnly: true,
-  joinNewVoiceChannel: true,
-  nsfw: true,
-});
-
-// DisTube event listeners
-client.distube
-  .on('playSong', (queue, song) => {
-    logger.success(`🎵 Now playing: ${song.name} | Duration: ${song.formattedDuration}`);
-  })
-  .on('addSong', (queue, song) => {
-    logger.info(`🎵 Added to queue: ${song.name}`);
-  })
-  .on('error', (error, queue, song) => {
-    logger.error('DisTube Error Event:', error?.stack || error?.message || error);
-  })
-  .on('empty', queue => {
-    logger.info('Voice channel is empty, leaving...');
-  })
-  .on('searchNoResult', (message, query) => {
-    logger.warn(`No results found for: ${query}`);
-  })
-  .on('finish', queue => {
-    logger.info('Queue finished, bot will leave soon.');
-  })
-  .on('ffmpegDebug', (debug) => {
-    logger.info(`FFmpeg debug: ${debug}`);
-  });
 
 client.commands = new Collection();
 
