@@ -1,7 +1,7 @@
 /**
  * AnDiX Native High-Performance Music Engine
- * Uses play-dl audio stream directly through Discord.js Voice with FFMPEG_PATH bindings.
- * Guaranteed continuous playback with Interactive UI Controls.
+ * Direct Node.js HTTPS Stream Pipeline to bypass container seccomp / FFmpeg network restrictions.
+ * Guaranteed audio delivery for both Sinhala & International songs.
  */
 
 const {
@@ -19,33 +19,29 @@ process.env.FFMPEG_PATH = ffmpegInstaller.path;
 const play = require('play-dl');
 const sc = require('soundcloud-scraper');
 const yts = require('yt-search');
+const https = require('https');
 const logger = require('../utils/logger');
 
 const scClient = new sc.Client();
 const queues = new Map();
 
-// Initialize SoundCloud token
-let soundCloudInitialized = false;
-async function initSoundCloud() {
-  if (soundCloudInitialized) return;
+let cachedClientId = 'ZeISTkUY1Q4so1FsHJKZaJo898iWk0d3';
+
+async function getValidClientId() {
   try {
-    const clientId = await play.getFreeClientID();
-    if (clientId) {
-      await play.setToken({ soundcloud: { client_id: clientId } });
-      soundCloudInitialized = true;
-      logger.success('Play-DL SoundCloud client ID initialized successfully.');
-      return;
+    const id = await play.getFreeClientID();
+    if (id) {
+      cachedClientId = id;
+      return id;
     }
   } catch (err) {
-    logger.warn('Auto-fetch SoundCloud client ID failed, using static token fallback:', err.message);
+    logger.warn('Failed to fetch dynamic SoundCloud client ID, using cached fallback');
   }
-
-  try {
-    await play.setToken({ soundcloud: { client_id: 'ZeISTkUY1Q4so1FsHJKZaJo898iWk0d3' } });
-    soundCloudInitialized = true;
-  } catch (e) {}
+  return cachedClientId;
 }
-initSoundCloud();
+
+// Initial fetch on startup
+getValidClientId();
 
 function cleanTitle(title) {
   if (!title) return '';
@@ -64,23 +60,80 @@ function extractVideoId(url) {
   return match ? match[1] : null;
 }
 
+// Fetch JSON over HTTPS with redirects
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return fetchJson(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`HTTP status ${res.statusCode}`));
+      }
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(raw));
+        } catch (e) {
+          reject(new Error(`Failed to parse response: ${e.message}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+// Get readable audio stream with redirect handling
+function fetchAudioStream(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return fetchAudioStream(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`Audio stream HTTP status ${res.statusCode}`));
+      }
+      resolve(res);
+    }).on('error', reject);
+  });
+}
+
+async function resolveDirectAudioStream(trackUrl) {
+  const songInfo = await scClient.getSongInfo(trackUrl);
+  const progressiveUrl = songInfo.streams?.progressive;
+  
+  if (!progressiveUrl) {
+    throw new Error('Track does not provide a progressive audio stream.');
+  }
+
+  const clientId = await getValidClientId();
+  const apiEndpoint = `${progressiveUrl}?client_id=${clientId}`;
+  const streamPayload = await fetchJson(apiEndpoint);
+
+  if (!streamPayload || !streamPayload.url) {
+    throw new Error('Could not retrieve direct playback URL from stream payload.');
+  }
+
+  const audioStream = await fetchAudioStream(streamPayload.url);
+  return { audioStream, songInfo };
+}
+
 const musicManager = {
   getQueue: (guildId) => queues.get(guildId),
 
   play: async (voiceChannel, query, interaction) => {
-    await initSoundCloud();
     const guildId = voiceChannel.guild.id;
     let queue = queues.get(guildId);
     const cleanQuery = query.trim();
 
     let song = null;
-    let targetUrl = null;
+    let candidateUrls = [];
 
     if (cleanQuery.includes('soundcloud.com')) {
-      targetUrl = cleanQuery;
+      candidateUrls.push(cleanQuery);
       song = {
         title: 'SoundCloud Track',
-        url: targetUrl,
+        url: cleanQuery,
         duration: 'Live / Audio',
         requestedBy: interaction.user.tag
       };
@@ -110,11 +163,11 @@ const musicManager = {
       try {
         const scResults = await scClient.search(searchTerm, 'track');
         if (scResults && scResults.length > 0) {
-          targetUrl = scResults[0].url;
+          candidateUrls = scResults.map(r => r.url);
           if (!song) {
             song = {
               title: scResults[0].title || searchTerm,
-              url: targetUrl,
+              url: scResults[0].url,
               duration: 'Unknown',
               thumbnail: scResults[0].thumbnail,
               requestedBy: interaction.user.tag
@@ -126,11 +179,12 @@ const musicManager = {
       }
     }
 
-    if (!targetUrl) {
-      throw new Error(`Could not find a playable track for "${cleanQuery}". Please try another name or link.`);
+    if (candidateUrls.length === 0) {
+      throw new Error(`Could not find any playable track for "${cleanQuery}".`);
     }
 
-    song.streamUrl = targetUrl;
+    song.candidateUrls = candidateUrls;
+    song.streamUrl = candidateUrls[0];
 
     if (!queue) {
       const connection = joinVoiceChannel({
@@ -143,11 +197,11 @@ const musicManager = {
 
       try {
         await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
-        logger.success(`Voice connection established and ready in guild: ${guildId}`);
+        logger.success(`Voice connection ready in guild: ${guildId}`);
       } catch (connErr) {
         logger.error('Voice connection handshake timeout:', connErr.message);
         try { connection.destroy(); } catch (e) {}
-        throw new Error('Could not establish secure voice handshake with Discord. Please try again.');
+        throw new Error('Voice connection timed out. Please try again.');
       }
 
       const player = createAudioPlayer();
@@ -170,11 +224,7 @@ const musicManager = {
       });
 
       player.on(AudioPlayerStatus.Playing, () => {
-        logger.success(`🎵 AudioPlayer actively playing audio in guild ${guildId}`);
-      });
-
-      player.on(AudioPlayerStatus.Buffering, () => {
-        logger.info(`AudioPlayer buffering audio stream...`);
+        logger.success(`🎵 Audio actively playing in guild ${guildId}`);
       });
 
       player.on('error', error => {
@@ -224,27 +274,32 @@ const musicManager = {
     const song = queue.queue.shift();
     queue.current = song;
 
-    try {
-      logger.info(`Resolving stream for: ${song.title} (${song.streamUrl})`);
-      await initSoundCloud();
+    let streamed = false;
+    const candidates = song.candidateUrls || [song.streamUrl];
 
-      // Continuous stream via play-dl with FFmpeg bindings
-      const streamSource = await play.stream(song.streamUrl, {
-        quality: 1,
-        discordPlayerCompatibility: true
-      });
+    for (const url of candidates) {
+      try {
+        logger.info(`Streaming via Direct HTTPS Pipe: ${song.title} (${url})`);
+        const { audioStream } = await resolveDirectAudioStream(url);
 
-      const resource = createAudioResource(streamSource.stream, {
-        inputType: streamSource.type,
-        inlineVolume: true
-      });
+        const resource = createAudioResource(audioStream, {
+          inputType: StreamType.Arbitrary,
+          inlineVolume: true
+        });
 
-      resource.volume?.setVolume(1.0);
-      queue.player.play(resource);
+        resource.volume?.setVolume(1.0);
+        queue.player.play(resource);
 
-      logger.success(`🎵 Pipe connected & playing audio for: ${song.title}`);
-    } catch (err) {
-      logger.error('Stream Pipeline Error:', err.message);
+        logger.success(`🎵 Audio stream piped directly to voice player!`);
+        streamed = true;
+        break;
+      } catch (err) {
+        logger.warn(`Candidate track stream failed (${url}):`, err.message);
+      }
+    }
+
+    if (!streamed) {
+      logger.error(`All audio stream candidates failed for: ${song.title}`);
       musicManager.playNext(guildId);
     }
   },
