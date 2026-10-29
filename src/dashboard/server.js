@@ -607,9 +607,9 @@ function createServer(client) {
 
 function startDashboard(client) {
   const app = createServer(client);
-  const port = process.env.PORT || config.dashboard?.port || 3000;
+  const port = process.env.PORT || process.env.SERVER_PORT || config.dashboard?.port || 3000;
 
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     logger.success(`========================================================`);
     logger.success(`🌐 AnDiX Commercial SaaS Platform is LIVE at: http://localhost:${port}`);
     logger.success(`👑 Master Admin Login: ${process.env.ADMIN_EMAIL || 'admin@andix.bot'}`);
