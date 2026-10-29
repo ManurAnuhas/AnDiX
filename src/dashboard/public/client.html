@@ -281,130 +281,54 @@
       </div>
     </div>
 
-    <!-- Payment + Bank Details -->
-    <div class="grid-2">
-
-      <!-- Upload Payment -->
-      <div class="section-card">
-        <div class="section-head">
-          <h3><i class="fas fa-upload"></i> Submit Payment Slip</h3>
-        </div>
-        <div class="section-body">
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
-            Transfer to our bank account below and upload your slip for approval.
-          </p>
-          <div class="form-group">
-            <label>Payment Type</label>
-            <select id="pay-type">
-              <option value="setup">Initial Setup — LKR 2,000</option>
-              <option value="renewal">Monthly Renewal — LKR 500</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Amount (LKR)</label>
-            <input type="number" id="pay-amount" placeholder="e.g. 2000" min="1">
-          </div>
-          <div class="form-group">
-            <label>Bank Slip Image</label>
-            <input type="file" id="slip-file" accept="image/*" onchange="previewSlip(event)">
-            <img id="slip-preview" class="slip-preview" alt="Slip Preview">
-          </div>
-          <button class="btn btn-primary" style="width:100%" onclick="submitPayment()">
-            <i class="fas fa-paper-plane"></i> Submit for Approval
-          </button>
-        </div>
-      </div>
-
-      <!-- Bank Details -->
-      <div class="section-card">
-        <div class="section-head">
-          <h3><i class="fas fa-university"></i> Bank Details</h3>
-        </div>
-        <div class="section-body">
-          <div class="bank-detail-box" id="bank-details">
-            <div class="bank-row"><label>Account Name</label><span id="bank-name">Loading...</span></div>
-            <div class="bank-row"><label>Bank</label><span id="bank-bank">...</span></div>
-            <div class="bank-row"><label>Account No.</label><span id="bank-acc">...</span></div>
-            <div class="bank-row"><label>Branch</label><span id="bank-branch">...</span></div>
-          </div>
-          <div style="margin-top:16px;padding:12px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;">
-            <p style="font-size:12px;color:var(--warning);">
-              <i class="fas fa-info-circle"></i>
-              <strong>Pricing:</strong><br>
-              • Initial Setup: <strong>LKR 2,000</strong> (one-time)<br>
-              • Monthly Renewal: <strong>LKR 500</strong>/month<br><br>
-              After transfer, upload your slip above. Admin will approve within 24h.
-            </p>
-          </div>
-          <div style="margin-top:12px;">
-            <a id="bot-invite-link" href="#" target="_blank" class="btn btn-secondary" style="width:100%;text-align:center;display:block;">
-              <i class="fab fa-discord"></i> Invite Bot to Your Server
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Payment History -->
-    <div class="section-card">
-      <div class="section-head">
-        <h3><i class="fas fa-history"></i> Payment History</h3>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="payment-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="payment-tbody">
-            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Server Management -->
+    <!-- Server Management (Primary Focus) -->
     <div class="section-card" id="server-mgmt-card">
       <div class="section-head">
-        <h3><i class="fas fa-cogs"></i> Server Management</h3>
-        <span class="badge info" id="linked-server-badge">No Server Linked</span>
+        <h3><i class="fas fa-cogs"></i> Discord Server Control Center</h3>
+        <span class="badge success" id="linked-server-badge">Free Launch Activated</span>
       </div>
       <div class="section-body" id="server-mgmt-body">
-        <div class="locked-overlay" id="mgmt-locked">
-          <i class="fas fa-lock"></i>
-          <h4>Active Subscription Required</h4>
-          <p>Submit a payment and wait for approval to unlock server management features.</p>
+        
+        <!-- Easy 2-Step Server Link Quick Banner -->
+        <div style="background: linear-gradient(135deg, rgba(153,69,255,0.12) 0%, rgba(0,255,163,0.08) 100%); border: 1px solid rgba(153,69,255,0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 16px;">
+          <div>
+            <h4 style="color:#fff; font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+              <i class="fab fa-discord" style="color:var(--primary);"></i> Step 1: Invite AnDiX to Your Server
+            </h4>
+            <p style="color:var(--text-muted); font-size:13px; margin:0;">
+              Click the button to invite AnDiX to your Discord community. No payment required during Free Launch!
+            </p>
+          </div>
+          <a id="bot-invite-link" href="#" target="_blank" class="btn btn-stream" style="padding:10px 22px; flex-shrink:0;">
+            <i class="fa-solid fa-plus"></i> Invite Bot Now
+          </a>
         </div>
-        <div id="mgmt-unlocked" style="display:none;">
+
+        <div id="mgmt-unlocked">
           <!-- Tabs -->
           <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-link')">Link Server</button>
-            <button class="tab-btn" onclick="switchTab('tab-setup')">Auto Setup</button>
-            <button class="tab-btn" onclick="switchTab('tab-stream')">Stream Alert</button>
-            <button class="tab-btn" onclick="switchTab('tab-announce')">Announce</button>
+            <button class="tab-btn active" onclick="switchTab('tab-link')"><i class="fas fa-link"></i> Link Server</button>
+            <button class="tab-btn" onclick="switchTab('tab-setup')"><i class="fas fa-wand-magic-sparkles"></i> 1-Click Auto Setup</button>
+            <button class="tab-btn" onclick="switchTab('tab-stream')"><i class="fas fa-tower-broadcast"></i> Stream Alert</button>
+            <button class="tab-btn" onclick="switchTab('tab-announce')"><i class="fas fa-bullhorn"></i> Announce</button>
           </div>
 
           <!-- Tab: Link Server -->
           <div id="tab-link" class="tab-panel active">
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
-              Enter your Discord Server ID to link it to your AnDiX subscription.
+              Enter your Discord Server ID to link your server with AnDiX Web Control.
             </p>
             <div class="form-row">
               <div class="form-group" style="margin:0;">
                 <label>Discord Server ID</label>
-                <input type="text" id="server-id-input" placeholder="e.g. 1234567890123456789">
+                <input type="text" id="server-id-input" placeholder="e.g. 1565285018509778944">
               </div>
               <button class="btn btn-primary" onclick="linkServer()">
-                <i class="fas fa-link"></i> Link
+                <i class="fas fa-link"></i> Link Server
               </button>
             </div>
-            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
-              <i class="fas fa-info-circle"></i> Right-click your server → Copy Server ID (enable Developer Mode in Discord settings first)
+            <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
+              <i class="fas fa-info-circle"></i> <strong>How to get Server ID:</strong> Open Discord → User Settings → Advanced → Turn on <strong>Developer Mode</strong> → Right-click your Server icon → Click <strong>Copy Server ID</strong>.
             </p>
           </div>
 
@@ -441,10 +365,10 @@
               <div class="form-group"><label>Game</label><input type="text" id="stream-game" placeholder="Minecraft"></div>
               <div class="form-group"><label>Platform</label>
                 <select id="stream-platform">
-                  <option>Twitch</option><option>YouTube</option><option>Facebook Gaming</option><option>Kick</option>
+                  <option>YouTube</option><option>Twitch</option><option>Facebook Gaming</option><option>Kick</option>
                 </select>
               </div>
-              <div class="form-group"><label>Stream URL</label><input type="text" id="stream-url" placeholder="https://twitch.tv/..."></div>
+              <div class="form-group"><label>Stream URL</label><input type="text" id="stream-url" placeholder="https://youtube.com/..."></div>
               <div class="form-group"><label>Thumbnail URL (optional)</label><input type="text" id="stream-thumb" placeholder="https://..."></div>
               <div class="form-group"><label>Ping Type</label>
                 <select id="stream-ping">
