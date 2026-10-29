@@ -27,6 +27,7 @@
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.4",
+    "opusscript": "^0.0.8",
     "play-dl": "^1.9.7",
     "sodium-native": "^5.2.0",
     "yt-search": "^2.13.1",

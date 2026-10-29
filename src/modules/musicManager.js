@@ -4,13 +4,20 @@ const {
   createAudioResource,
   AudioPlayerStatus,
   VoiceConnectionStatus,
-  entersState
+  entersState,
+  StreamType
 } = require('@discordjs/voice');
 const yts = require('yt-search');
 const play = require('play-dl');
 const logger = require('../utils/logger');
 
 const queues = new Map();
+
+function extractVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
+}
 
 const musicManager = {
   getQueue: (guildId) => queues.get(guildId),
@@ -22,22 +29,38 @@ const musicManager = {
     const cleanQuery = query.trim();
 
     try {
-      // 1. Robust Search via yt-search (No HPE_HEADER_OVERFLOW error)
-      const searchResult = await yts(cleanQuery);
-      const videos = searchResult?.videos || [];
+      const videoId = extractVideoId(cleanQuery);
 
-      if (videos.length > 0) {
-        const top = videos[0];
-        song = {
-          title: top.title,
-          url: top.url,
-          duration: top.timestamp || top.duration?.toString() || 'Unknown',
-          thumbnail: top.thumbnail || top.image,
-          requestedBy: interaction.user.tag
-        };
+      if (videoId) {
+        // Direct YouTube Link (youtube.com / youtu.be)
+        const videoData = await yts({ videoId });
+        if (videoData) {
+          song = {
+            title: videoData.title,
+            url: videoData.url,
+            duration: videoData.timestamp || 'Unknown',
+            thumbnail: videoData.thumbnail || videoData.image,
+            requestedBy: interaction.user.tag
+          };
+        }
+      } else {
+        // Text Search
+        const searchResult = await yts(cleanQuery);
+        const videos = searchResult?.videos || [];
+
+        if (videos.length > 0) {
+          const top = videos[0];
+          song = {
+            title: top.title,
+            url: top.url,
+            duration: top.timestamp || top.duration?.toString() || 'Unknown',
+            thumbnail: top.thumbnail || top.image,
+            requestedBy: interaction.user.tag
+          };
+        }
       }
     } catch (err) {
-      logger.error('yt-search error:', err);
+      logger.error('yt-search resolution error:', err);
     }
 
     // Fallback: If yt-search failed, try play-dl
@@ -54,20 +77,21 @@ const musicManager = {
           };
         }
       } catch (err) {
-        logger.error('play-dl search fallback error:', err);
+        logger.error('play-dl fallback error:', err);
       }
     }
 
     if (!song) {
-      throw new Error('No song found for your query. Please try another title or direct link.');
+      throw new Error('No song found for your query. Please provide a valid song name or YouTube link.');
     }
 
-    // Initialize Voice Connection & Player
+    // Initialize Voice Connection & Audio Player
     if (!queue) {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: guildId,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        selfDeaf: true
       });
 
       const player = createAudioPlayer();
@@ -99,7 +123,7 @@ const musicManager = {
             entersState(connection, VoiceConnectionStatus.Connecting, 5_000)
           ]);
         } catch (e) {
-          connection.destroy();
+          try { connection.destroy(); } catch(err){}
           queues.delete(guildId);
         }
       });
@@ -135,10 +159,13 @@ const musicManager = {
     queue.current = song;
 
     try {
-      const stream = await play.stream(song.url);
+      // Stream audio with fallback
+      const stream = await play.stream(song.url, { quality: 2 });
       const resource = createAudioResource(stream.stream, {
-        inputType: stream.type
+        inputType: stream.type,
+        inlineVolume: true
       });
+      resource.volume.setVolume(1.0);
       queue.player.play(resource);
     } catch (err) {
       logger.error('Stream play error:', err);
