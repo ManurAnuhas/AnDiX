@@ -7,6 +7,8 @@ const {
 } = require('discord.js');
 const { DisTube } = require('distube');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
+const { YtDlpPlugin } = require('@distube/yt-dlp');
+const ffmpegStatic = require('ffmpeg-static');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./src/utils/logger');
@@ -33,9 +35,15 @@ const client = new Client({
   ]
 });
 
-// Initialize DisTube with SoundCloud plugin
+// Initialize DisTube with SoundCloud & yt-dlp plugins + explicit ffmpeg path
 client.distube = new DisTube(client, {
-  plugins: [new SoundCloudPlugin()],
+  ffmpeg: {
+    path: ffmpegStatic || 'ffmpeg',
+  },
+  plugins: [
+    new SoundCloudPlugin(),
+    new YtDlpPlugin({ update: false })
+  ],
   emitNewSongOnly: true,
   joinNewVoiceChannel: true,
   nsfw: true,
