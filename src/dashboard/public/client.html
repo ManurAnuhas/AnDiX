@@ -426,9 +426,23 @@ let linkedServerId = null;
 // On load
 window.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('andix_token');
-  if (!token) return window.location.href = 'auth.html';
-  await loadProfile(token);
-  await loadPayments(token);
+  const cachedUser = localStorage.getItem('andix_user');
+  
+  if (cachedUser) {
+    try {
+      renderProfile(JSON.parse(cachedUser));
+    } catch(e) {}
+  }
+
+  // Set default Discord invite link right away
+  const inviteBtn = document.getElementById('bot-invite-link');
+  if (inviteBtn) {
+    inviteBtn.href = "https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands";
+  }
+
+  if (token) {
+    await loadProfile(token);
+  }
   await loadBankDetails();
 });
 
