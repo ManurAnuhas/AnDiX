@@ -21,7 +21,7 @@ const logger = require('../utils/logger');
 const scClient = new sc.Client();
 const queues = new Map();
 
-// Initialize SoundCloud token on boot
+// Initialize SoundCloud token on boot with bulletproof fallback
 let soundCloudInitialized = false;
 async function initSoundCloud() {
   if (soundCloudInitialized) return;
@@ -31,9 +31,19 @@ async function initSoundCloud() {
       await play.setToken({ soundcloud: { client_id: clientId } });
       soundCloudInitialized = true;
       logger.success('Play-DL SoundCloud client ID initialized successfully.');
+      return;
     }
   } catch (err) {
-    logger.warn('Failed to auto-fetch SoundCloud client ID:', err.message);
+    logger.warn('Auto-fetch SoundCloud client ID failed, using active static token fallback:', err.message);
+  }
+
+  // Known active SoundCloud public API client ID fallback
+  try {
+    await play.setToken({ soundcloud: { client_id: 'ZeISTkUY1Q4so1FsHJKZaJo898iWk0d3' } });
+    soundCloudInitialized = true;
+    logger.success('Play-DL static SoundCloud client ID initialized successfully.');
+  } catch (e) {
+    logger.error('Failed to set SoundCloud fallback token:', e.message);
   }
 }
 initSoundCloud();
