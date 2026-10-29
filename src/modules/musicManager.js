@@ -22,39 +22,57 @@ const musicManager = {
 
     // Search song via play-dl (YouTube, Spotify, SoundCloud)
     let song = null;
+    const cleanQuery = query.trim();
+
     try {
-      if (query.includes('spotify.com/')) {
+      if (cleanQuery.includes('spotify.com/')) {
         if (play.is_expired()) {
           await play.refreshToken();
         }
-        const spData = await play.spotify(query);
-        if (spData.type === 'track') {
-          const searched = await play.search(`${spData.name} ${spData.artists[0]?.name}`, { limit: 1 });
+        const spData = await play.spotify(cleanQuery);
+        if (spData && (spData.type === 'track' || spData.name)) {
+          const searchTitle = `${spData.name} ${spData.artists?.[0]?.name || ''}`.trim();
+          const searched = await play.search(searchTitle, { limit: 1, source: { youtube: 'video' } });
           if (searched.length > 0) {
             song = {
               title: spData.name,
               url: searched[0].url,
-              duration: searched[0].durationRaw,
-              thumbnail: spData.thumbnail?.url || searched[0].thumbnails[0]?.url,
+              duration: searched[0].durationRaw || 'Unknown',
+              thumbnail: spData.thumbnail?.url || searched[0].thumbnails?.[0]?.url,
               requestedBy: interaction.user.tag
             };
           }
         }
+      } else if (play.yt_validate(cleanQuery) === 'video') {
+        // Direct YouTube URL
+        const info = await play.video_info(cleanQuery);
+        if (info && info.video_details) {
+          song = {
+            title: info.video_details.title,
+            url: info.video_details.url,
+            duration: info.video_details.durationRaw,
+            thumbnail: info.video_details.thumbnails?.[0]?.url,
+            requestedBy: interaction.user.tag
+          };
+        }
       } else {
-        const searched = await play.search(query, { limit: 1 });
-        if (searched.length > 0) {
+        // Standard text search (search both video and general)
+        let searched = await play.search(cleanQuery, { limit: 1, source: { youtube: 'video' } });
+        if (!searched || searched.length === 0) {
+          searched = await play.search(cleanQuery, { limit: 1 });
+        }
+        if (searched && searched.length > 0) {
           song = {
             title: searched[0].title,
             url: searched[0].url,
-            duration: searched[0].durationRaw,
-            thumbnail: searched[0].thumbnails[0]?.url,
+            duration: searched[0].durationRaw || 'Unknown',
+            thumbnail: searched[0].thumbnails?.[0]?.url,
             requestedBy: interaction.user.tag
           };
         }
       }
     } catch (err) {
       logger.error('Music Search Error:', err);
-      throw new Error('Could not find or stream the requested song.');
     }
 
     if (!song) {
@@ -165,3 +183,4 @@ const musicManager = {
 };
 
 module.exports = musicManager;
+
