@@ -216,16 +216,37 @@ const musicManager = {
 
     try {
       logger.info(`Resolving native stream for: ${song.title} (${song.streamUrl})`);
-      await initSoundCloud();
+      let audioStream = null;
+      let inputType = StreamType.Arbitrary;
 
-      // Pure Node.js streaming — no external ffmpeg binary required
-      const streamSource = await play.stream(song.streamUrl, {
-        quality: 1,
-        discordPlayerCompatibility: true
-      });
+      // Primary: Direct progressive MP3 stream via soundcloud-scraper
+      try {
+        const songInfo = await scClient.getSongInfo(song.streamUrl);
+        audioStream = await songInfo.downloadProgressive();
+        if (audioStream) {
+          logger.success(`Direct progressive stream obtained for: ${song.title}`);
+        }
+      } catch (scErr) {
+        logger.warn('Progressive stream fetch fallback:', scErr.message);
+      }
 
-      const resource = createAudioResource(streamSource.stream, {
-        inputType: streamSource.type,
+      // Secondary Fallback: play-dl stream
+      if (!audioStream) {
+        await initSoundCloud();
+        const streamSource = await play.stream(song.streamUrl, {
+          quality: 1,
+          discordPlayerCompatibility: true
+        });
+        audioStream = streamSource.stream;
+        inputType = streamSource.type;
+      }
+
+      if (!audioStream) {
+        throw new Error('Unable to resolve audio stream');
+      }
+
+      const resource = createAudioResource(audioStream, {
+        inputType: inputType,
         inlineVolume: true
       });
 
