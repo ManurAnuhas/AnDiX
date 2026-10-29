@@ -4,68 +4,79 @@ const {
   createAudioResource,
   AudioPlayerStatus,
   VoiceConnectionStatus,
-  entersState
+  entersState,
+  StreamType
 } = require('@discordjs/voice');
 const yts = require('yt-search');
-const play = require('play-dl');
+const sc = require('soundcloud-scraper');
 const logger = require('../utils/logger');
 
+const scClient = new sc.Client();
 const queues = new Map();
-let soundCloudInitialized = false;
 
-async function initSoundCloud() {
-  if (!soundCloudInitialized) {
-    try {
-      const client_id = await play.getFreeClientID();
-      await play.setToken({ soundcloud: { client_id } });
-      soundCloudInitialized = true;
-      logger.info('SoundCloud client token initialized successfully.');
-    } catch (e) {
-      logger.warn('SoundCloud init warning:', e.message);
-    }
-  }
+function extractVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
 }
 
 const musicManager = {
   getQueue: (guildId) => queues.get(guildId),
 
   play: async (voiceChannel, query, interaction) => {
-    await initSoundCloud();
     const guildId = voiceChannel.guild.id;
     let queue = queues.get(guildId);
     let song = null;
     const cleanQuery = query.trim();
 
-    // 1. YouTube metadata search (for title, duration, thumbnail)
     try {
-      const searchResult = await yts(cleanQuery);
-      const topVideo = searchResult?.videos?.[0];
+      const videoId = extractVideoId(cleanQuery);
 
-      if (topVideo) {
-        song = {
-          title: topVideo.title,
-          url: topVideo.url,
-          duration: topVideo.timestamp || 'Unknown',
-          thumbnail: topVideo.thumbnail || topVideo.image,
-          requestedBy: interaction.user.tag,
-          cleanTitle: topVideo.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
-        };
+      if (videoId) {
+        // Direct YouTube Link
+        const videoData = await yts({ videoId });
+        if (videoData) {
+          song = {
+            title: videoData.title,
+            url: videoData.url,
+            duration: videoData.timestamp || 'Unknown',
+            thumbnail: videoData.thumbnail || videoData.image,
+            requestedBy: interaction.user.tag,
+            searchTerm: videoData.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
+          };
+        }
+      } else {
+        // Text Search via yt-search
+        const searchResult = await yts(cleanQuery);
+        const videos = searchResult?.videos || [];
+
+        if (videos.length > 0) {
+          const top = videos[0];
+          song = {
+            title: top.title,
+            url: top.url,
+            duration: top.timestamp || top.duration?.toString() || 'Unknown',
+            thumbnail: top.thumbnail || top.image,
+            requestedBy: interaction.user.tag,
+            searchTerm: top.title.replace(/[\[\(].*?[\]\)]/g, '').trim()
+          };
+        }
       }
-    } catch (e) {
-      logger.error('Metadata search error:', e);
+    } catch (err) {
+      logger.error('Song Search Error:', err);
     }
 
     if (!song) {
-      throw new Error('No song found for your query. Please provide a song name or link.');
+      throw new Error('No song found for your query. Please check the song name or link.');
     }
 
-    // 2. Initialize Voice Connection
+    // Initialize Voice Connection & Player
     if (!queue) {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: guildId,
         adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        selfDeaf: true
+        selfDeaf: false
       });
 
       const player = createAudioPlayer();
@@ -132,46 +143,33 @@ const musicManager = {
     const song = queue.queue.shift();
     queue.current = song;
 
-    let stream = null;
-
-    // Strategy 1: Fast & Clean SoundCloud Audio Stream (Bypasses YouTube 429 Bot Check)
     try {
-      const scSearch = await play.search(song.cleanTitle || song.title, {
-        source: { soundcloud: 'tracks' },
-        limit: 1
-      });
+      logger.info(`Fetching progressive audio stream for: ${song.title}`);
+      
+      // High-Quality Progressive Audio Stream
+      const scSearch = await scClient.search(song.searchTerm || song.title, 'track');
+      let audioStream = null;
 
       if (scSearch && scSearch.length > 0) {
-        stream = await play.stream(scSearch[0].url);
+        const songInfo = await scClient.getSongInfo(scSearch[0].url);
+        audioStream = await songInfo.downloadProgressive();
       }
-    } catch (e) {
-      logger.warn('SoundCloud stream attempt failed, attempting fallback...');
-    }
 
-    // Strategy 2: Direct YouTube Stream fallback
-    if (!stream) {
-      try {
-        stream = await play.stream(song.url);
-      } catch (e) {
-        logger.error('YouTube direct stream error:', e.message);
+      if (!audioStream) {
+        throw new Error('Could not resolve audio stream');
       }
-    }
 
-    if (!stream) {
-      logger.error(`Could not stream audio for track: ${song.title}`);
-      return musicManager.playNext(guildId);
-    }
-
-    try {
-      const resource = createAudioResource(stream.stream, {
-        inputType: stream.type,
+      const resource = createAudioResource(audioStream, {
+        inputType: StreamType.Arbitrary,
         inlineVolume: true
       });
+
       resource.volume?.setVolume(1.0);
       queue.player.play(resource);
-      logger.success(`Playing audio: ${song.title}`);
+      logger.success(`🎵 Audio playing successfully in voice channel: ${song.title}`);
+
     } catch (err) {
-      logger.error('Audio play error:', err);
+      logger.error('Streaming Error:', err.message);
       musicManager.playNext(guildId);
     }
   },
