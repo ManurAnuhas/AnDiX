@@ -9,6 +9,8 @@ const {
 } = require('@discordjs/voice');
 const yts = require('yt-search');
 const sc = require('soundcloud-scraper');
+const prism = require('prism-media');
+const ffmpegPath = require('ffmpeg-static');
 const logger = require('../utils/logger');
 
 const scClient = new sc.Client();
@@ -33,7 +35,6 @@ const musicManager = {
       const videoId = extractVideoId(cleanQuery);
 
       if (videoId) {
-        // Direct YouTube Link
         const videoData = await yts({ videoId });
         if (videoData) {
           song = {
@@ -46,7 +47,6 @@ const musicManager = {
           };
         }
       } else {
-        // Text Search via yt-search
         const searchResult = await yts(cleanQuery);
         const videos = searchResult?.videos || [];
 
@@ -67,10 +67,10 @@ const musicManager = {
     }
 
     if (!song) {
-      throw new Error('No song found for your query. Please check the song name or link.');
+      throw new Error('No song found for your query. Please provide a valid song name or link.');
     }
 
-    // Initialize Voice Connection & Player
+    // Join Voice Channel
     if (!queue) {
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
@@ -144,32 +144,45 @@ const musicManager = {
     queue.current = song;
 
     try {
-      logger.info(`Fetching progressive audio stream for: ${song.title}`);
+      logger.info(`Resolving audio stream for: ${song.title}`);
       
-      // High-Quality Progressive Audio Stream
       const scSearch = await scClient.search(song.searchTerm || song.title, 'track');
-      let audioStream = null;
+      let progressiveStream = null;
 
       if (scSearch && scSearch.length > 0) {
         const songInfo = await scClient.getSongInfo(scSearch[0].url);
-        audioStream = await songInfo.downloadProgressive();
+        progressiveStream = await songInfo.downloadProgressive();
       }
 
-      if (!audioStream) {
-        throw new Error('Could not resolve audio stream');
+      if (!progressiveStream) {
+        throw new Error('Could not download audio stream from provider');
       }
 
-      const resource = createAudioResource(audioStream, {
-        inputType: StreamType.Arbitrary,
+      // Convert stream to Discord 48kHz Stereo PCM via FFmpeg
+      const transcoder = new prism.FFmpeg({
+        ffmpegPath: ffmpegPath,
+        args: [
+          '-analyzeduration', '0',
+          '-loglevel', '0',
+          '-f', 's16le',
+          '-ar', '48000',
+          '-ac', '2'
+        ]
+      });
+
+      const audioPipeline = progressiveStream.pipe(transcoder);
+
+      const resource = createAudioResource(audioPipeline, {
+        inputType: StreamType.Raw,
         inlineVolume: true
       });
 
       resource.volume?.setVolume(1.0);
       queue.player.play(resource);
-      logger.success(`🎵 Audio playing successfully in voice channel: ${song.title}`);
+      logger.success(`🎵 Audio playing in Voice Channel: ${song.title}`);
 
     } catch (err) {
-      logger.error('Streaming Error:', err.message);
+      logger.error('Audio Streaming Pipeline Error:', err.message);
       musicManager.playNext(guildId);
     }
   },
