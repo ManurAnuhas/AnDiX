@@ -7,30 +7,24 @@ const {
 } = require('discord.js');
 const { DisTube } = require('distube');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
-const { YtDlpPlugin } = require('@distube/yt-dlp');
-let ffmpegStatic = require('ffmpeg-static');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const logger = require('./src/utils/logger');
 const config = require('./config.json');
 const { startDashboard } = require('./src/dashboard/server');
 
-// Ensure ffmpeg binary exists on host
+// Determine stable ffmpeg path (prefer @ffmpeg-installer to prevent SIGSEGV)
+let ffmpegPath = ffmpegInstaller.path;
 try {
-  if (!ffmpegStatic || !fs.existsSync(ffmpegStatic)) {
-    logger.warn('FFmpeg binary not found at default path, running installer...');
-    const installScript = path.join(__dirname, 'node_modules', 'ffmpeg-static', 'install.js');
-    if (fs.existsSync(installScript)) {
-      execSync(`node "${installScript}"`, { stdio: 'inherit' });
-      delete require.cache[require.resolve('ffmpeg-static')];
-      ffmpegStatic = require('ffmpeg-static');
-      logger.success('FFmpeg static binary installed successfully!');
-    }
+  if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
+    const ffmpegStatic = require('ffmpeg-static');
+    ffmpegPath = ffmpegStatic;
   }
 } catch (e) {
-  logger.warn('Could not auto-install ffmpeg-static:', e.message);
+  ffmpegPath = 'ffmpeg';
 }
+logger.info(`FFmpeg binary active at: ${ffmpegPath}`);
 
 // Initialize Discord Client with required Gateway Intents
 const client = new Client({
@@ -52,10 +46,10 @@ const client = new Client({
   ]
 });
 
-// Initialize DisTube with SoundCloud plugin + explicit ffmpeg path
+// Initialize DisTube with SoundCloud plugin + container-compatible ffmpeg
 client.distube = new DisTube(client, {
   ffmpeg: {
-    path: ffmpegStatic || 'ffmpeg',
+    path: ffmpegPath || 'ffmpeg',
   },
   plugins: [
     new SoundCloudPlugin()
