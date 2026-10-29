@@ -17,6 +17,12 @@ function cleanTitle(title) {
     .trim();
 }
 
+function extractVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
+}
+
 const musicManager = {
   /**
    * Play a song/search query using DisTube.
@@ -39,13 +45,12 @@ const musicManager = {
     if (cleanQuery.includes('soundcloud.com')) {
       playTarget = cleanQuery;
     } else {
-      // If it's a YouTube URL or query string, extract search term
       let searchTerm = cleanQuery;
-      const isYoutube = /(?:youtu\.be\/|youtube\.com)/i.test(cleanQuery);
+      const ytVideoId = extractVideoId(cleanQuery);
 
-      if (isYoutube) {
+      if (ytVideoId) {
         try {
-          const ytResult = await yts(cleanQuery);
+          const ytResult = await yts({ videoId: ytVideoId });
           if (ytResult && ytResult.title) {
             searchTerm = cleanTitle(ytResult.title);
             songMetadata = {
@@ -53,27 +58,26 @@ const musicManager = {
               thumbnail: ytResult.thumbnail || ytResult.image,
               duration: ytResult.timestamp || 'Unknown'
             };
+            logger.info(`Extracted YouTube Video Title: "${searchTerm}" from ID: ${ytVideoId}`);
           }
         } catch (e) {
-          logger.warn('YouTube search metadata fallback:', e.message);
+          logger.warn('YouTube videoId metadata fetch error:', e.message);
         }
       }
 
-      // Search SoundCloud directly for public tracks
+      // Search SoundCloud directly for public tracks matching the title
       try {
         const scResults = await scClient.search(searchTerm, 'track');
         if (scResults && scResults.length > 0) {
-          // Find first track that contains a valid url
           const bestTrack = scResults[0];
           playTarget = bestTrack.url;
-          logger.info(`Resolved "${cleanQuery}" to SoundCloud: ${playTarget}`);
+          logger.info(`Resolved "${searchTerm}" to SoundCloud: ${playTarget}`);
         } else {
-          // If search returned empty, pass as SoundCloud query
           playTarget = `scsearch:${searchTerm}`;
         }
       } catch (err) {
         logger.warn('SoundCloud direct search fallback:', err.message);
-        playTarget = `scsearch:${cleanQuery}`;
+        playTarget = `scsearch:${searchTerm}`;
       }
     }
 
