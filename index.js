@@ -46,10 +46,15 @@ const client = new Client({
   ]
 });
 
-// Initialize DisTube with SoundCloud plugin + container-compatible ffmpeg
+// Initialize DisTube with SoundCloud plugin + low-memory single-thread ffmpeg
 client.distube = new DisTube(client, {
   ffmpeg: {
     path: ffmpegPath || 'ffmpeg',
+    args: {
+      global: {
+        threads: '1',
+      }
+    }
   },
   plugins: [
     new SoundCloudPlugin()

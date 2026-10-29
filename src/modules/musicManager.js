@@ -13,7 +13,10 @@ function cleanTitle(title) {
   if (!title) return '';
   return title
     .replace(/[\[\(].*?[\]\)]/g, '')
-    .replace(/official|music|video|audio|lyrics|hd|4k/gi, '')
+    .replace(/@[a-zA-Z0-9_]+/g, '')
+    .replace(/\b(official|music|video|audio|lyrics|hd|4k|ft\.?|feat\.?)\b/gi, '')
+    .replace(/[|•·\-_/\\#]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
