@@ -17,7 +17,7 @@ module.exports = {
       });
     }
 
-    const skipped = musicManager.skip(interaction.guildId);
+    const skipped = await musicManager.skip(interaction.guildId, interaction.client);
     if (!skipped) {
       return interaction.reply({
         content: 'ℹ️ There is no song currently playing to skip.',
@@ -28,3 +28,4 @@ module.exports = {
     return interaction.reply('⏭️ Skipped to the next song in the queue!');
   }
 };
+

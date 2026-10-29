@@ -5,6 +5,8 @@ const {
   Partials,
   Collection
 } = require('discord.js');
+const { DisTube } = require('distube');
+const { SoundCloudPlugin } = require('@distube/soundcloud');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./src/utils/logger');
@@ -30,6 +32,35 @@ const client = new Client({
     Partials.GuildMember
   ]
 });
+
+// Initialize DisTube with SoundCloud plugin
+client.distube = new DisTube(client, {
+  plugins: [new SoundCloudPlugin()],
+  emitNewSongOnly: true,
+  joinNewVoiceChannel: true,
+  nsfw: true,
+});
+
+// DisTube event listeners
+client.distube
+  .on('playSong', (queue, song) => {
+    logger.success(`🎵 Now playing: ${song.name} | Duration: ${song.formattedDuration}`);
+  })
+  .on('addSong', (queue, song) => {
+    logger.info(`🎵 Added to queue: ${song.name}`);
+  })
+  .on('error', (channel, error) => {
+    logger.error('DisTube Error:', error.message || error);
+  })
+  .on('empty', queue => {
+    logger.info('Voice channel is empty, leaving...');
+  })
+  .on('searchNoResult', (message, query) => {
+    logger.warn(`No results found for: ${query}`);
+  })
+  .on('finish', queue => {
+    logger.info('Queue finished, bot will leave soon.');
+  });
 
 client.commands = new Collection();
 

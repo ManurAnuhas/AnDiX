@@ -17,7 +17,7 @@ module.exports = {
       });
     }
 
-    const stopped = musicManager.stop(interaction.guildId);
+    const stopped = await musicManager.stop(interaction.guildId, interaction.client);
     if (!stopped) {
       return interaction.reply({
         content: 'ℹ️ There is no music playing right now.',
@@ -28,3 +28,4 @@ module.exports = {
     return interaction.reply('⏹️ Music stopped and queue cleared.');
   }
 };
+

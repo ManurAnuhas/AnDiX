@@ -1,218 +1,121 @@
-const {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
-  entersState,
-  StreamType
-} = require('@discordjs/voice');
-const yts = require('yt-search');
-const sc = require('soundcloud-scraper');
-const prism = require('prism-media');
-const ffmpegPath = require('ffmpeg-static');
+/**
+ * AnDiX Music Manager — DisTube v5 + SoundCloud Plugin
+ * Handles music playback through SoundCloud (primary) via DisTube.
+ * YouTube is also supported as fallback if not blocked by host.
+ */
+
 const logger = require('../utils/logger');
 
-const scClient = new sc.Client();
-const queues = new Map();
-
-function extractVideoId(url) {
-  if (!url) return null;
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-  return match ? match[1] : null;
-}
-
 const musicManager = {
-  getQueue: (guildId) => queues.get(guildId),
-
+  /**
+   * Play a song/search query using DisTube.
+   * @param {import('discord.js').VoiceChannel} voiceChannel
+   * @param {string} query - Song title or SoundCloud/YouTube URL
+   * @param {import('discord.js').ChatInputCommandInteraction} interaction
+   */
   play: async (voiceChannel, query, interaction) => {
-    const guildId = voiceChannel.guild.id;
-    let queue = queues.get(guildId);
-    let song = null;
-    const cleanQuery = query.trim();
+    const distube = interaction.client.distube;
 
-    try {
-      const videoId = extractVideoId(cleanQuery);
-
-      if (videoId) {
-        const videoData = await yts({ videoId });
-        if (videoData) {
-          song = {
-            title: videoData.title,
-            url: videoData.url,
-            duration: videoData.timestamp || 'Unknown',
-            thumbnail: videoData.thumbnail || videoData.image,
-            requestedBy: interaction.user.tag,
-            searchTerm: videoData.title.replace(/[\[\(].*?[\]\)]/g, '').replace(/official|music|video|audio|lyrics/gi, '').trim()
-          };
-        }
-      } else {
-        const searchResult = await yts(cleanQuery);
-        const videos = searchResult?.videos || [];
-
-        if (videos.length > 0) {
-          const top = videos[0];
-          song = {
-            title: top.title,
-            url: top.url,
-            duration: top.timestamp || top.duration?.toString() || 'Unknown',
-            thumbnail: top.thumbnail || top.image,
-            requestedBy: interaction.user.tag,
-            searchTerm: top.title.replace(/[\[\(].*?[\]\)]/g, '').replace(/official|music|video|audio|lyrics/gi, '').trim()
-          };
-        }
-      }
-    } catch (err) {
-      logger.error('Song Search Error:', err);
+    if (!distube) {
+      throw new Error('Music system is not initialized. Please contact an admin.');
     }
 
-    if (!song) {
-      throw new Error('No song found for your query. Please provide a valid song name or link.');
+    // Prefix SoundCloud search if it's not a URL (forces SC results)
+    let resolvedQuery = query;
+    const isUrl = /^https?:\/\//i.test(query);
+
+    if (!isUrl) {
+      // Use SoundCloud search prefix for reliable results
+      resolvedQuery = `scsearch:${query}`;
     }
 
-    // Join Voice Channel
-    if (!queue) {
-      const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: guildId,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        selfDeaf: false
-      });
+    logger.info(`Attempting to play: ${resolvedQuery}`);
 
-      const player = createAudioPlayer();
+    // Play via DisTube — it handles joining VC automatically
+    await distube.play(voiceChannel, resolvedQuery, {
+      member: interaction.member,
+      textChannel: interaction.channel,
+    });
 
-      queue = {
-        connection,
-        player,
-        voiceChannel,
-        queue: [],
-        current: null
+    // Get current queue state
+    const queue = distube.getQueue(voiceChannel.guildId);
+
+    if (queue && queue.songs.length > 0) {
+      const currentSong = queue.songs[0];
+      const isQueued = queue.songs.length > 1;
+
+      return {
+        status: isQueued ? 'queued' : 'playing',
+        song: {
+          title: currentSong.name || query,
+          url: currentSong.url || '',
+          duration: currentSong.formattedDuration || 'Unknown',
+          thumbnail: currentSong.thumbnail || null,
+          requestedBy: interaction.user.tag,
+        },
+        position: isQueued ? queue.songs.length : 1,
       };
-
-      connection.subscribe(player);
-      queues.set(guildId, queue);
-
-      player.on(AudioPlayerStatus.Idle, () => {
-        musicManager.playNext(guildId);
-      });
-
-      player.on('error', error => {
-        logger.error(`Music player error in guild ${guildId}:`, error);
-        musicManager.playNext(guildId);
-      });
-
-      connection.on(VoiceConnectionStatus.Disconnected, async () => {
-        try {
-          await Promise.race([
-            entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-            entersState(connection, VoiceConnectionStatus.Connecting, 5_000)
-          ]);
-        } catch (e) {
-          try { connection.destroy(); } catch (err) {}
-          queues.delete(guildId);
-        }
-      });
     }
 
-    queue.queue.push(song);
-
-    if (!queue.current) {
-      await musicManager.playNext(guildId);
-      return { status: 'playing', song };
-    } else {
-      return { status: 'queued', song, position: queue.queue.length };
-    }
+    // Fallback return if queue state not immediately available
+    return {
+      status: 'playing',
+      song: {
+        title: query,
+        url: '',
+        duration: 'Unknown',
+        thumbnail: null,
+        requestedBy: interaction.user.tag,
+      },
+    };
   },
 
-  playNext: async (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue) return;
-
-    if (queue.queue.length === 0) {
-      queue.current = null;
-      setTimeout(() => {
-        const q = queues.get(guildId);
-        if (q && !q.current && q.queue.length === 0) {
-          try { q.connection.destroy(); } catch (e) {}
-          queues.delete(guildId);
-        }
-      }, 120000);
-      return;
-    }
-
-    const song = queue.queue.shift();
-    queue.current = song;
+  /**
+   * Skip the current song.
+   * @param {string} guildId
+   * @param {import('discord.js').Client} client
+   */
+  skip: async (guildId, client) => {
+    const distube = client.distube;
+    const queue = distube?.getQueue(guildId);
+    if (!queue || !queue.songs.length) return false;
 
     try {
-      logger.info(`Resolving audio stream for: ${song.title}`);
-      let audioStream = null;
-
-      // Search SoundCloud candidates
-      const scCandidates = await scClient.search(song.searchTerm || song.title, 'track');
-
-      for (const track of scCandidates) {
-        try {
-          const songInfo = await scClient.getSongInfo(track.url);
-          audioStream = await songInfo.downloadProgressive();
-          if (audioStream) {
-            logger.success(`Found active stream from: ${track.url}`);
-            break;
-          }
-        } catch (err) {
-          // Private track or geo-restricted; silently try next candidate
-        }
-      }
-
-      if (!audioStream) {
-        throw new Error('Could not find a playable public audio stream');
-      }
-
-      // Transcode via FFmpeg into Discord 48kHz Stereo PCM
-      const transcoder = new prism.FFmpeg({
-        ffmpegPath: ffmpegPath,
-        args: [
-          '-analyzeduration', '0',
-          '-loglevel', '0',
-          '-f', 's16le',
-          '-ar', '48000',
-          '-ac', '2'
-        ]
-      });
-
-      const audioPipeline = audioStream.pipe(transcoder);
-
-      const resource = createAudioResource(audioPipeline, {
-        inputType: StreamType.Raw,
-        inlineVolume: true
-      });
-
-      resource.volume?.setVolume(1.0);
-      queue.player.play(resource);
-      logger.success(`🎵 Audio playing in Voice Channel: ${song.title}`);
-
-    } catch (err) {
-      logger.error('Audio Streaming Pipeline Error:', err.message);
-      musicManager.playNext(guildId);
+      await distube.skip(guildId);
+      return true;
+    } catch (e) {
+      logger.error('Skip error:', e.message);
+      return false;
     }
   },
 
-  skip: (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue || !queue.current) return false;
-    queue.player.stop();
-    return true;
+  /**
+   * Stop playback and leave voice channel.
+   * @param {string} guildId
+   * @param {import('discord.js').Client} client
+   */
+  stop: async (guildId, client) => {
+    const distube = client.distube;
+    const queue = distube?.getQueue(guildId);
+    if (!queue) return false;
+
+    try {
+      await distube.stop(guildId);
+      return true;
+    } catch (e) {
+      logger.error('Stop error:', e.message);
+      return false;
+    }
   },
 
-  stop: (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue) return false;
-    queue.queue = [];
-    queue.current = null;
-    queue.player.stop();
-    try { queue.connection.destroy(); } catch (e) {}
-    queues.delete(guildId);
-    return true;
-  }
+  /**
+   * Get current queue for a guild.
+   * @param {string} guildId
+   * @param {import('discord.js').Client} client
+   */
+  getQueue: (guildId, client) => {
+    return client?.distube?.getQueue(guildId) || null;
+  },
 };
 
 module.exports = musicManager;
