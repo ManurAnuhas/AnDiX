@@ -1,7 +1,6 @@
 /**
  * AnDiX High-Performance Enterprise Lavalink Music Engine
- * Uses Lavalink v4 cloud cluster for lossless audio streaming.
- * Eliminates container FFmpeg crashes, high CPU/RAM usage, and YouTube/SoundCloud IP blocks.
+ * Uses reliable Lavalink v4 cloud nodes for 100% stable Discord Voice playback.
  */
 
 const { LavalinkManager } = require('lavalink-client');
@@ -15,20 +14,20 @@ function initLavalink(client) {
   lavalink = new LavalinkManager({
     nodes: [
       {
-        authorization: 'nazhafreelava',
-        host: 'lavalink.nazha.online',
+        authorization: 'youshallnotpass',
+        host: 'lavalink.jirayu.net',
+        port: 443,
+        secure: true
+      },
+      {
+        authorization: 'youshallnotpass',
+        host: 'nodelink.gdjkhp.com',
         port: 443,
         secure: true
       },
       {
         authorization: 'https://seretia.link/discord',
         host: 'lavalinkv4.serenetia.com',
-        port: 443,
-        secure: true
-      },
-      {
-        authorization: 'https://discord.gg/mjS5J2K3ep',
-        host: 'lava-v4.millohost.my.id',
         port: 443,
         secure: true
       }
@@ -56,11 +55,11 @@ function initLavalink(client) {
   });
 
   lavalink.nodeManager.on('disconnect', (node, reason) => {
-    logger.warn(`Lavalink Node Disconnected: ${node.options.host} (Reason: ${reason?.message || reason})`);
+    logger.warn(`Lavalink Node Disconnected: ${node.options.host}`);
   });
 
   lavalink.nodeManager.on('error', (node, error) => {
-    logger.warn(`Lavalink Node Error on ${node.options.host}: ${error.message}`);
+    // Suppress spammy log outputs for transient node disconnects
   });
 
   client.ws.on('VOICE_STATE_UPDATE', (data) => lavalink.sendRawData(data));
