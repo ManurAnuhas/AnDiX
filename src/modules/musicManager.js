@@ -62,8 +62,7 @@ function initLavalink(client) {
     // Suppress spammy log outputs for transient node disconnects
   });
 
-  client.ws.on('VOICE_STATE_UPDATE', (data) => lavalink.sendRawData(data));
-  client.ws.on('VOICE_SERVER_UPDATE', (data) => lavalink.sendRawData(data));
+  client.on('raw', (data) => lavalink.sendRawData(data));
 
   return lavalink;
 }
