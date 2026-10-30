@@ -1,6 +1,7 @@
 /**
  * AnDiX High-Performance Enterprise Lavalink Music Engine
  * Uses reliable Lavalink v4 cloud nodes for 100% stable Discord Voice playback.
+ * Includes auto-reconnect, fallback retry, and smooth continuous queue management.
  */
 
 const { LavalinkManager } = require('lavalink-client');
@@ -59,7 +60,31 @@ function initLavalink(client) {
   });
 
   lavalink.nodeManager.on('error', (node, error) => {
-    // Suppress spammy log outputs for transient node disconnects
+    // Suppress transient node disconnect logs
+  });
+
+  // Track events
+  lavalink.on('trackStart', (player, track) => {
+    logger.success(`🎵 Track started playing: ${track.info.title}`);
+  });
+
+  lavalink.on('trackEnd', (player, track, payload) => {
+    logger.info(`Track ended: ${track?.info?.title} (Reason: ${payload.reason})`);
+    if (payload.reason === 'loadFailed' && player.queue.tracks.length > 0) {
+      player.play();
+    }
+  });
+
+  lavalink.on('trackError', async (player, track, payload) => {
+    logger.warn(`Track playback interrupted (${payload.exception?.message || 'error'}), attempting auto-recovery...`);
+    if (player.queue.tracks.length > 0) {
+      await player.skip();
+    }
+  });
+
+  lavalink.on('trackStuck', async (player, track, payload) => {
+    logger.warn(`Track stuck detected, resuming stream...`);
+    await player.seek(player.position + 1000);
   });
 
   client.on('raw', (data) => lavalink.sendRawData(data));
@@ -95,9 +120,18 @@ const musicManager = {
       await player.connect();
     }
 
-    const res = await player.search({
-      query: query.trim()
+    // Try YouTube search first, with SoundCloud fallback
+    let res = await player.search({
+      query: query.trim(),
+      source: 'ytsearch'
     }, interaction.user);
+
+    if (!res || !res.tracks || res.tracks.length === 0) {
+      res = await player.search({
+        query: query.trim(),
+        source: 'scsearch'
+      }, interaction.user);
+    }
 
     if (!res || !res.tracks || res.tracks.length === 0) {
       throw new Error(`Could not find any song matching "${query}".`);
