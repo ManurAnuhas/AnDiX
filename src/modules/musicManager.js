@@ -43,7 +43,7 @@ function initLavalink(client) {
     },
     autoSkip: true,
     playerOptions: {
-      defaultSearchPlatform: 'ytsearch',
+      defaultSearchPlatform: 'scsearch',
       onDisconnect: {
         autoReconnect: true,
         destroyPlayer: false
@@ -120,16 +120,16 @@ const musicManager = {
       await player.connect();
     }
 
-    // Try YouTube search first, with SoundCloud fallback
+    // Prioritize SoundCloud stream for uninterrupted playback (bypasses YouTube 3-min throttling)
     let res = await player.search({
       query: query.trim(),
-      source: 'ytsearch'
+      source: 'scsearch'
     }, interaction.user);
 
     if (!res || !res.tracks || res.tracks.length === 0) {
       res = await player.search({
         query: query.trim(),
-        source: 'scsearch'
+        source: 'ytsearch'
       }, interaction.user);
     }
 
