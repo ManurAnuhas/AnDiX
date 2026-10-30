@@ -33,7 +33,7 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      const result = await musicManager.play(voiceChannel, query, interaction);
+      const result = await musicManager.play(voiceChannel, query, interaction, interaction.client);
 
       // Create Interactive Control Buttons
       const row = new ActionRowBuilder().addComponents(

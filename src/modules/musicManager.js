@@ -1,340 +1,183 @@
 /**
- * AnDiX Native High-Performance Music Engine
- * Direct Node.js HTTPS Stream Pipeline to bypass container seccomp / FFmpeg network restrictions.
- * Guaranteed audio delivery for both Sinhala & International songs.
+ * AnDiX High-Performance Enterprise Lavalink Music Engine
+ * Uses Lavalink v4 cloud cluster for lossless audio streaming.
+ * Eliminates container FFmpeg crashes, high CPU/RAM usage, and YouTube/SoundCloud IP blocks.
  */
 
-const {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
-  entersState,
-  StreamType
-} = require('@discordjs/voice');
-const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
-process.env.FFMPEG_PATH = ffmpegInstaller.path;
-
-const play = require('play-dl');
-const sc = require('soundcloud-scraper');
-const yts = require('yt-search');
-const https = require('https');
+const { LavalinkManager } = require('lavalink-client');
 const logger = require('../utils/logger');
 
-const scClient = new sc.Client();
-const queues = new Map();
+let lavalink = null;
 
-let cachedClientId = 'ZeISTkUY1Q4so1FsHJKZaJo898iWk0d3';
+function initLavalink(client) {
+  if (lavalink) return lavalink;
 
-async function getValidClientId() {
-  try {
-    const id = await play.getFreeClientID();
-    if (id) {
-      cachedClientId = id;
-      return id;
+  lavalink = new LavalinkManager({
+    nodes: [
+      {
+        authorization: 'nazhafreelava',
+        host: 'lavalink.nazha.online',
+        port: 443,
+        secure: true
+      },
+      {
+        authorization: 'https://seretia.link/discord',
+        host: 'lavalinkv4.serenetia.com',
+        port: 443,
+        secure: true
+      },
+      {
+        authorization: 'https://discord.gg/mjS5J2K3ep',
+        host: 'lava-v4.millohost.my.id',
+        port: 443,
+        secure: true
+      }
+    ],
+    sendToShard: (guildId, payload) => {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) guild.shard.send(payload);
+    },
+    client: {
+      id: client.user?.id || process.env.CLIENT_ID || '1565283272072761424',
+      username: 'AnDiX'
+    },
+    autoSkip: true,
+    playerOptions: {
+      defaultSearchPlatform: 'ytsearch',
+      onDisconnect: {
+        autoReconnect: true,
+        destroyPlayer: false
+      }
     }
-  } catch (err) {
-    logger.warn('Failed to fetch dynamic SoundCloud client ID, using cached fallback');
-  }
-  return cachedClientId;
-}
-
-// Initial fetch on startup
-getValidClientId();
-
-function cleanTitle(title) {
-  if (!title) return '';
-  return title
-    .replace(/[\[\(].*?[\]\)]/g, '')
-    .replace(/@[a-zA-Z0-9_]+/g, '')
-    .replace(/\b(official|music|video|audio|lyrics|hd|4k|ft\.?|feat\.?)\b/gi, '')
-    .replace(/[|•·\-_/\\#]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function extractVideoId(url) {
-  if (!url) return null;
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-  return match ? match[1] : null;
-}
-
-// Fetch JSON over HTTPS with redirects
-function fetchJson(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchJson(res.headers.location).then(resolve).catch(reject);
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`HTTP status ${res.statusCode}`));
-      }
-      let raw = '';
-      res.on('data', chunk => raw += chunk);
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(raw));
-        } catch (e) {
-          reject(new Error(`Failed to parse response: ${e.message}`));
-        }
-      });
-    }).on('error', reject);
   });
-}
 
-// Get readable audio stream with redirect handling
-function fetchAudioStream(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchAudioStream(res.headers.location).then(resolve).catch(reject);
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`Audio stream HTTP status ${res.statusCode}`));
-      }
-      resolve(res);
-    }).on('error', reject);
+  lavalink.nodeManager.on('connect', (node) => {
+    logger.success(`🎵 Lavalink Cloud Audio Node Connected: ${node.options.host}`);
   });
-}
 
-async function resolveDirectAudioStream(trackUrl) {
-  const songInfo = await scClient.getSongInfo(trackUrl);
-  const progressiveUrl = songInfo.streams?.progressive;
-  
-  if (!progressiveUrl) {
-    throw new Error('Track does not provide a progressive audio stream.');
-  }
+  lavalink.nodeManager.on('disconnect', (node, reason) => {
+    logger.warn(`Lavalink Node Disconnected: ${node.options.host} (Reason: ${reason?.message || reason})`);
+  });
 
-  const clientId = await getValidClientId();
-  const apiEndpoint = `${progressiveUrl}?client_id=${clientId}`;
-  const streamPayload = await fetchJson(apiEndpoint);
+  lavalink.nodeManager.on('error', (node, error) => {
+    logger.warn(`Lavalink Node Error on ${node.options.host}: ${error.message}`);
+  });
 
-  if (!streamPayload || !streamPayload.url) {
-    throw new Error('Could not retrieve direct playback URL from stream payload.');
-  }
+  client.ws.on('VOICE_STATE_UPDATE', (data) => lavalink.sendRawData(data));
+  client.ws.on('VOICE_SERVER_UPDATE', (data) => lavalink.sendRawData(data));
 
-  const audioStream = await fetchAudioStream(streamPayload.url);
-  return { audioStream, songInfo };
+  return lavalink;
 }
 
 const musicManager = {
-  getQueue: (guildId) => queues.get(guildId),
+  init: initLavalink,
+  getManager: () => lavalink,
 
-  play: async (voiceChannel, query, interaction) => {
+  play: async (voiceChannel, query, interaction, client) => {
+    if (!lavalink) {
+      initLavalink(client);
+    }
+
+    if (!lavalink.initiated) {
+      await lavalink.init({ id: client.user.id, username: client.user.username });
+    }
+
     const guildId = voiceChannel.guild.id;
-    let queue = queues.get(guildId);
-    const cleanQuery = query.trim();
+    let player = lavalink.getPlayer(guildId);
 
-    let song = null;
-    let candidateUrls = [];
+    if (!player) {
+      player = await lavalink.createPlayer({
+        guildId: guildId,
+        voiceChannelId: voiceChannel.id,
+        textChannelId: interaction.channelId,
+        selfDeaf: false,
+        selfMute: false,
+        volume: 100
+      });
+      await player.connect();
+    }
 
-    if (cleanQuery.includes('soundcloud.com')) {
-      candidateUrls.push(cleanQuery);
-      song = {
-        title: 'SoundCloud Track',
-        url: cleanQuery,
-        duration: 'Live / Audio',
+    const res = await player.search({
+      query: query.trim()
+    }, interaction.user);
+
+    if (!res || !res.tracks || res.tracks.length === 0) {
+      throw new Error(`Could not find any song matching "${query}".`);
+    }
+
+    let songInfo = null;
+
+    if (res.loadType === 'playlist') {
+      for (const track of res.tracks) {
+        await player.queue.add(track);
+      }
+      songInfo = {
+        title: res.playlist?.title || 'Playlist',
+        url: query,
+        duration: `${res.tracks.length} Tracks`,
+        thumbnail: res.tracks[0]?.info?.artworkUrl || res.tracks[0]?.info?.uri,
         requestedBy: interaction.user.tag
       };
+      if (!player.playing) await player.play();
+      return { status: 'queued_playlist', song: songInfo, count: res.tracks.length };
+    }
+
+    const track = res.tracks[0];
+    songInfo = {
+      title: track.info.title,
+      url: track.info.uri,
+      duration: track.info.duration ? formatDuration(track.info.duration) : 'Live / Audio',
+      thumbnail: track.info.artworkUrl,
+      requestedBy: interaction.user.tag
+    };
+
+    if (player.playing || player.paused) {
+      await player.queue.add(track);
+      return { status: 'queued', song: songInfo, position: player.queue.tracks.length };
     } else {
-      let searchTerm = cleanQuery;
-      const ytVideoId = extractVideoId(cleanQuery);
-
-      if (ytVideoId) {
-        try {
-          const ytResult = await yts({ videoId: ytVideoId });
-          if (ytResult && ytResult.title) {
-            searchTerm = cleanTitle(ytResult.title);
-            song = {
-              title: ytResult.title,
-              url: ytResult.url,
-              duration: ytResult.timestamp || 'Unknown',
-              thumbnail: ytResult.thumbnail || ytResult.image,
-              requestedBy: interaction.user.tag
-            };
-          }
-        } catch (e) {
-          logger.warn('YouTube extraction error:', e.message);
-        }
-      }
-
-      // Search SoundCloud
-      try {
-        const scResults = await scClient.search(searchTerm, 'track');
-        if (scResults && scResults.length > 0) {
-          candidateUrls = scResults.map(r => r.url);
-          if (!song) {
-            song = {
-              title: scResults[0].title || searchTerm,
-              url: scResults[0].url,
-              duration: 'Unknown',
-              thumbnail: scResults[0].thumbnail,
-              requestedBy: interaction.user.tag
-            };
-          }
-        }
-      } catch (err) {
-        logger.warn('SoundCloud search error:', err.message);
-      }
-    }
-
-    if (candidateUrls.length === 0) {
-      throw new Error(`Could not find any playable track for "${cleanQuery}".`);
-    }
-
-    song.candidateUrls = candidateUrls;
-    song.streamUrl = candidateUrls[0];
-
-    if (!queue) {
-      const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: guildId,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        selfDeaf: false,
-        selfMute: false
-      });
-
-      try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 20_000);
-        logger.success(`Voice connection ready in guild: ${guildId}`);
-      } catch (connErr) {
-        logger.error('Voice connection handshake timeout:', connErr.message);
-        try { connection.destroy(); } catch (e) {}
-        throw new Error('Voice connection timed out. Please try again.');
-      }
-
-      const player = createAudioPlayer();
-
-      queue = {
-        connection,
-        player,
-        voiceChannel,
-        queue: [],
-        current: null,
-        paused: false
-      };
-
-      connection.subscribe(player);
-      queues.set(guildId, queue);
-
-      player.on(AudioPlayerStatus.Idle, () => {
-        logger.info(`AudioPlayer became Idle in guild ${guildId}`);
-        musicManager.playNext(guildId);
-      });
-
-      player.on(AudioPlayerStatus.Playing, () => {
-        logger.success(`🎵 Audio actively playing in guild ${guildId}`);
-      });
-
-      player.on('error', error => {
-        logger.error(`Music player error in guild ${guildId}:`, error.message);
-        musicManager.playNext(guildId);
-      });
-
-      connection.on(VoiceConnectionStatus.Disconnected, async () => {
-        try {
-          await Promise.race([
-            entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-            entersState(connection, VoiceConnectionStatus.Connecting, 5_000)
-          ]);
-        } catch (e) {
-          try { connection.destroy(); } catch (err) {}
-          queues.delete(guildId);
-        }
-      });
-    }
-
-    queue.queue.push(song);
-
-    if (!queue.current) {
-      await musicManager.playNext(guildId);
-      return { status: 'playing', song };
-    } else {
-      return { status: 'queued', song, position: queue.queue.length };
-    }
-  },
-
-  playNext: async (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue) return;
-
-    if (queue.queue.length === 0) {
-      queue.current = null;
-      setTimeout(() => {
-        const q = queues.get(guildId);
-        if (q && !q.current && q.queue.length === 0) {
-          try { q.connection.destroy(); } catch (e) {}
-          queues.delete(guildId);
-        }
-      }, 120000);
-      return;
-    }
-
-    const song = queue.queue.shift();
-    queue.current = song;
-
-    let streamed = false;
-    const candidates = song.candidateUrls || [song.streamUrl];
-
-    for (const url of candidates) {
-      try {
-        logger.info(`Streaming via Direct HTTPS Pipe: ${song.title} (${url})`);
-        const { audioStream } = await resolveDirectAudioStream(url);
-
-        const resource = createAudioResource(audioStream, {
-          inputType: StreamType.Arbitrary,
-          inlineVolume: true
-        });
-
-        resource.volume?.setVolume(1.0);
-        queue.player.play(resource);
-
-        logger.success(`🎵 Audio stream piped directly to voice player!`);
-        streamed = true;
-        break;
-      } catch (err) {
-        logger.warn(`Candidate track stream failed (${url}):`, err.message);
-      }
-    }
-
-    if (!streamed) {
-      logger.error(`All audio stream candidates failed for: ${song.title}`);
-      musicManager.playNext(guildId);
+      await player.queue.add(track);
+      await player.play();
+      return { status: 'playing', song: songInfo };
     }
   },
 
   pause: (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue || !queue.current) return null;
-    if (queue.paused) {
-      queue.player.unpause();
-      queue.paused = false;
+    if (!lavalink) return null;
+    const player = lavalink.getPlayer(guildId);
+    if (!player) return null;
+
+    if (player.paused) {
+      player.resume();
       return 'resumed';
     } else {
-      queue.player.pause();
-      queue.paused = true;
+      player.pause();
       return 'paused';
     }
   },
 
-  skip: (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue || !queue.current) return false;
-    queue.player.stop();
+  skip: async (guildId) => {
+    if (!lavalink) return false;
+    const player = lavalink.getPlayer(guildId);
+    if (!player || (!player.playing && player.queue.tracks.length === 0)) return false;
+    await player.skip();
     return true;
   },
 
-  stop: (guildId) => {
-    const queue = queues.get(guildId);
-    if (!queue) return false;
-    queue.queue = [];
-    queue.current = null;
-    queue.player.stop();
-    try { queue.connection.destroy(); } catch (e) {}
-    queues.delete(guildId);
+  stop: async (guildId) => {
+    if (!lavalink) return false;
+    const player = lavalink.getPlayer(guildId);
+    if (!player) return false;
+    await player.destroy();
     return true;
   }
 };
+
+function formatDuration(ms) {
+  if (!ms || isNaN(ms)) return 'Live';
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
 
 module.exports = musicManager;

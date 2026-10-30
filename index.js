@@ -13,6 +13,7 @@ const path = require('path');
 const logger = require('./src/utils/logger');
 const config = require('./config.json');
 const { startDashboard } = require('./src/dashboard/server');
+const musicManager = require('./src/modules/musicManager');
 
 // Initialize Discord Client with required Gateway Intents
 const client = new Client({
@@ -96,7 +97,12 @@ if (!token || token.trim() === '' || token === 'your_bot_token_here') {
   logger.warn('👉 Then run: npm start (to start the bot)');
   logger.warn('========================================================');
 } else {
-  client.login(token).catch(err => {
+  client.login(token).then(() => {
+    // Initialize Lavalink Audio Engine
+    musicManager.init(client);
+    client.lavalink = musicManager.getManager();
+    client.lavalink.init({ id: client.user.id, username: client.user.username });
+  }).catch(err => {
     logger.error('Failed to login to Discord! Please check your BOT_TOKEN:', err);
   });
 }
