@@ -602,35 +602,39 @@ window.addEventListener('DOMContentLoaded', async () => {
 let cachedGuilds = [];
 
 async function loadServers() {
+  const token = localStorage.getItem('andix_token');
   try {
-    const res = await fetch(`${API}/api/status`);
+    // Fetch ONLY servers where the logged-in user has Owner, Admin, or Moderator permissions
+    const res = await fetch(`${API}/api/client/managed-servers`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     const data = await res.json();
-    cachedGuilds = data.guilds || [];
+    cachedGuilds = data.servers || [];
 
     const select = document.getElementById('server-dropdown-select');
     if (!select) return;
 
     if (!cachedGuilds.length) {
-      select.innerHTML = '<option value="">No servers found</option>';
-      document.getElementById('active-server-name').textContent = 'No Servers Available';
-      document.getElementById('active-server-sub').textContent = 'Click "Add to Another Server" to invite AnDiX bot to your community.';
+      select.innerHTML = '<option value="">No managed servers found</option>';
+      document.getElementById('active-server-name').textContent = 'No Servers with Admin Access';
+      document.getElementById('active-server-sub').textContent = 'You must be a Server Owner, Admin, or Moderator in a server where AnDiX is present.';
       return;
     }
 
     select.innerHTML = cachedGuilds.map(g => `
       <option value="${g.id}" ${g.id === linkedServerId ? 'selected' : ''}>
-        ${g.name} (${g.memberCount} members)
+        ${g.name} (${g.memberCount} members) — ${g.roleTitle || 'Admin'}
       </option>
     `).join('');
 
-    // If no server linked yet, auto-select the first server
-    if (!linkedServerId && cachedGuilds.length > 0) {
+    // Auto-select the first managed server if none currently active
+    if (!linkedServerId || !cachedGuilds.some(g => g.id === linkedServerId)) {
       linkedServerId = cachedGuilds[0].id;
     }
 
     updateActiveServerDisplay(linkedServerId);
   } catch (e) {
-    console.error('Failed to load servers:', e);
+    console.error('Failed to load managed servers:', e);
   }
 }
 

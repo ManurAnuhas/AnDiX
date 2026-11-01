@@ -340,6 +340,64 @@ function createServer(client) {
     res.json(payments);
   });
 
+  // Get User's Managed Discord Servers (Only where user is Owner, Admin, or Moderator)
+  app.get('/api/client/managed-servers', auth.requireAuth, async (req, res) => {
+    const user = db.findUserById(req.user.id);
+    const userDiscordId = user?.discordId || req.user.discordId;
+
+    const managedGuilds = [];
+
+    for (const [guildId, guild] of client.guilds.cache) {
+      let isAllowed = false;
+      let userRoleTitle = 'Member';
+
+      // 1. Is user the Server Owner?
+      if (userDiscordId && guild.ownerId === userDiscordId) {
+        isAllowed = true;
+        userRoleTitle = '👑 Server Owner';
+      } else if (userDiscordId) {
+        // 2. Fetch member to check Admin / Mod permissions
+        try {
+          const member = await guild.members.fetch(userDiscordId).catch(() => null);
+          if (member) {
+            if (member.permissions.has(PermissionFlagsBits.Administrator)) {
+              isAllowed = true;
+              userRoleTitle = '🛡️ Administrator';
+            } else if (
+              member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+              member.permissions.has(PermissionFlagsBits.ModerateMembers) ||
+              member.permissions.has(PermissionFlagsBits.ManageMessages)
+            ) {
+              isAllowed = true;
+              userRoleTitle = '⚔️ Moderator';
+            }
+          }
+        } catch (e) {}
+      }
+
+      // If user has manually linked this specific server, also allow it
+      if (!isAllowed && user?.discordServerId === guild.id) {
+        isAllowed = true;
+        userRoleTitle = 'Linked Community';
+      }
+
+      if (isAllowed) {
+        managedGuilds.push({
+          id: guild.id,
+          name: guild.name,
+          icon: guild.iconURL({ dynamic: true }) || 'https://cdn-icons-png.flaticon.com/512/5968/5968756.png',
+          memberCount: guild.memberCount,
+          roleTitle: userRoleTitle
+        });
+      }
+    }
+
+    res.json({
+      servers: managedGuilds,
+      count: managedGuilds.length
+    });
+  });
+
   // Link Client's Discord Server ID
   app.post('/api/client/link-server', auth.requireAuth, (req, res) => {
     const { serverId, serverName } = req.body;
