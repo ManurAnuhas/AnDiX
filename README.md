@@ -198,7 +198,7 @@ AnDiX/
 ---
 
 <div align="center">
-<p>© 2026 <strong>AnDiX Suite</strong> — Built for Sri Lankan Gaming Streamers & Discord Communities</p>
+<p>© 2026 <strong>AnDiX Suite</strong> — Engineered & Developed by <strong>Muxx Digital</strong></p>
 
 [![Add to Discord](https://img.shields.io/badge/ADD%20BOT%20TO%20SERVER-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands)
 </div>

@@ -2069,54 +2069,55 @@ input[type="email"]:focus {
    SUPER ATTRACTIVE MODERN GAMING ENHANCEMENTS
    ========================================================================== */
 
-/* Cyberpunk Mesh & Tech Grid Background */
+/* Cyberpunk Mesh & Tech Grid Background with Deep Purple Ambience */
 body.landing-page {
-  background-color: #07080c;
+  background-color: #06070a;
   background-image: 
-    radial-gradient(circle at 15% 20%, rgba(153, 69, 255, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 85% 35%, rgba(0, 255, 163, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(255, 0, 85, 0.09) 0%, transparent 50%),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    radial-gradient(circle at 20% 15%, rgba(153, 69, 255, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(108, 20, 208, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 50% 75%, rgba(217, 70, 239, 0.14) 0%, transparent 50%),
+    linear-gradient(rgba(153, 69, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153, 69, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
 }
 
-/* Glassmorphism Cards with Neon Accent */
-.card, .architect-card, .feature-card, .pricing-card, .window-frame {
-  background: rgba(18, 21, 32, 0.72) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(153, 69, 255, 0.18) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+/* Frosted Glassmorphism Cards with Neon Purple Accents */
+.card, .architect-card, .feature-card, .pricing-card, .window-frame, .section-card {
+  background: rgba(15, 17, 28, 0.8) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(153, 69, 255, 0.22) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 1px rgba(153, 69, 255, 0.2) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.architect-card:hover, .feature-card:hover {
+.architect-card:hover, .feature-card:hover, .stat-card:hover {
   transform: translateY(-6px) scale(1.01) !important;
-  border-color: rgba(153, 69, 255, 0.5) !important;
-  box-shadow: 0 16px 40px rgba(153, 69, 255, 0.22), 0 0 20px rgba(153, 69, 255, 0.1) !important;
+  border-color: rgba(153, 69, 255, 0.6) !important;
+  box-shadow: 0 18px 45px rgba(153, 69, 255, 0.25), 0 0 25px rgba(153, 69, 255, 0.15) !important;
 }
 
-/* Glowing Neon Header */
+/* Glowing Neon Purple Header */
 .landing-navbar {
-  background: rgba(9, 10, 15, 0.8) !important;
-  backdrop-filter: blur(20px) !important;
-  border-bottom: 1px solid rgba(153, 69, 255, 0.15) !important;
+  background: rgba(8, 9, 14, 0.85) !important;
+  backdrop-filter: blur(24px) !important;
+  border-bottom: 1px solid rgba(153, 69, 255, 0.25) !important;
+  box-shadow: 0 4px 30px rgba(153, 69, 255, 0.1) !important;
 }
 
-/* Hero Title Gradient Shine */
+/* Hero Title Gradient Shine (Electric Purple to Cyan & Magenta) */
 .hero-title .text-gradient {
-  background: linear-gradient(135deg, #00FFA3 0%, #00C8FF 40%, #9945FF 80%, #FF0055 100%);
+  background: linear-gradient(135deg, #B770FF 0%, #9945FF 35%, #00C8FF 70%, #00FFA3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 35px rgba(0, 255, 163, 0.35));
+  filter: drop-shadow(0 0 35px rgba(153, 69, 255, 0.45));
 }
 
-/* Stream Button Neon Pulse */
+/* Purple Stream Action Button */
 .btn-stream {
-  background: linear-gradient(135deg, #9945FF 0%, #7928CA 50%, #FF0055 100%) !important;
-  box-shadow: 0 4px 25px rgba(153, 69, 255, 0.45) !important;
-  border: none !important;
+  background: linear-gradient(135deg, #9945FF 0%, #7928CA 60%, #D946EF 100%) !important;
+  box-shadow: 0 4px 25px rgba(153, 69, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   color: #fff !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px !important;
@@ -2125,7 +2126,15 @@ body.landing-page {
 
 .btn-stream:hover {
   transform: translateY(-3px) scale(1.02) !important;
-  box-shadow: 0 8px 35px rgba(255, 0, 85, 0.6) !important;
+  box-shadow: 0 8px 35px rgba(153, 69, 255, 0.75), 0 0 15px rgba(217, 70, 239, 0.5) !important;
+}
+
+/* Badges with Purple Halo */
+.badge-gaming, .badge-accent {
+  background: rgba(153, 69, 255, 0.15) !important;
+  border: 1px solid rgba(153, 69, 255, 0.4) !important;
+  color: #D8B4FE !important;
+  box-shadow: 0 0 12px rgba(153, 69, 255, 0.2) !important;
 }
 
 /* Music Live Preview Widget Styles */
