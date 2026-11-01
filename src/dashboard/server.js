@@ -677,7 +677,8 @@ function createServer(client) {
       'ticketCategory',
       'ticketChannel',
       'tempVoiceHubChannel',
-      'automodEnabled'
+      'automodEnabled',
+      'levelUpChannel'
     ];
 
     for (const key of allowedKeys) {
