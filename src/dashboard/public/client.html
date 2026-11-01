@@ -545,35 +545,45 @@
 
               <!-- AI Results Scrollable Content Body -->
               <div id="audit-results-state" style="display:none;flex:1;overflow-y:auto;padding-right:4px;">
+
                 <!-- AI Score Card -->
-                <div style="background:rgba(15,17,28,0.9);border:1px solid var(--border-color);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                  <div>
-                    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Community Health Rating</div>
-                    <div id="ai-grade-text" style="font-family:var(--font-heading);font-size:17px;color:#00FFA3;font-weight:700;">Good Foundation</div>
-                    <p id="ai-existing-summary" style="font-size:12px;color:var(--text-muted);margin:4px 0 0 0;">Existing channels & roles are safely protected.</p>
+                <div style="background:linear-gradient(135deg,rgba(15,17,28,0.95),rgba(153,69,255,0.06));border:1px solid rgba(153,69,255,0.25);border-radius:14px;padding:18px 20px;margin-bottom:14px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+                    <div style="flex:1;">
+                      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Community Health Rating</div>
+                      <div id="ai-grade-text" style="font-family:var(--font-heading);font-size:18px;color:#00FFA3;font-weight:700;">Good Foundation</div>
+                      <p id="ai-existing-summary" style="font-size:12px;color:var(--text-muted);margin:6px 0 0 0;line-height:1.5;">Existing channels & roles are safely protected.</p>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">AI Score</div>
+                      <div id="ai-score-number" style="font-family:var(--font-heading);font-size:38px;color:#fff;font-weight:900;line-height:1;">75<span style="font-size:15px;color:var(--text-muted);">/100</span></div>
+                    </div>
                   </div>
-                  <div style="text-align:right;">
-                    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">AI Score</div>
-                    <div id="ai-score-number" style="font-family:var(--font-heading);font-size:30px;color:#fff;font-weight:900;">75<span style="font-size:15px;color:var(--text-muted);">/100</span></div>
+                  <div style="background:rgba(255,255,255,0.06);border-radius:99px;height:6px;overflow:hidden;">
+                    <div id="ai-score-bar" style="height:100%;border-radius:99px;background:#00FFA3;width:0%;transition:width 1.2s ease;"></div>
                   </div>
+                  <p id="ai-priority-summary" style="display:none;font-size:11.5px;color:var(--text-muted);margin:10px 0 0 0;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid #9945FF;"></p>
                 </div>
 
-                <!-- AI Recommendations Insights -->
+                <!-- What's Already Good -->
+                <div id="ai-existing-good" style="display:none;background:rgba(0,255,163,0.04);border:1px solid rgba(0,255,163,0.15);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;"></div>
+
+                <!-- AI Strategic Insights -->
                 <div style="margin-bottom:14px;">
-                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                    <i class="fa-solid fa-lightbulb" style="color:#FFB800;"></i> AI Strategic Insights:
+                  <strong style="color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                    <i class="fa-solid fa-brain" style="color:#FFB800;"></i> AI Strategic Insights:
                   </strong>
-                  <div id="ai-insights-list" style="background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.25);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text-main);line-height:1.6;">
+                  <div id="ai-insights-list" style="border-radius:10px;font-size:12px;color:var(--text-main);line-height:1.6;">
                     <!-- Injected via JS -->
                   </div>
                 </div>
 
-                <!-- Actionable Checklist of Missing Additions -->
+                <!-- Actionable Missing Items -->
                 <div style="margin-bottom:14px;">
-                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                    <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Recommended Safe Additions (Missing):
+                  <strong style="color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                    <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Recommended Safe Additions:
                   </strong>
-                  <div id="audit-missing-list" style="max-height:160px;overflow-y:auto;background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;font-size:12px;">
+                  <div id="audit-missing-list" style="overflow-y:auto;max-height:220px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:4px 14px;font-size:12px;">
                     <!-- Injected via JS -->
                   </div>
                 </div>
@@ -1174,7 +1184,7 @@ async function runAIAudit() {
     loading.style.display = 'none';
     results.style.display = 'block';
 
-    // 1. Grade and Score
+    // 1. Server Type Badge + Grade + Score
     const gradeText = document.getElementById('ai-grade-text');
     gradeText.textContent = data.aiGrade || 'Good Foundation';
     gradeText.style.color = data.gradeColor || '#00FFA3';
@@ -1182,46 +1192,109 @@ async function runAIAudit() {
     const scoreNum = document.getElementById('ai-score-number');
     scoreNum.innerHTML = `${data.aiScore}<span style="font-size:16px;color:var(--text-muted);">/100</span>`;
 
-    const summaryText = document.getElementById('ai-existing-summary');
-    summaryText.innerHTML = `
-      Protected: <strong>${data.existingStats?.textChannelsCount || 0} Text</strong>, 
-      <strong>${data.existingStats?.voiceChannelsCount || 0} Voice</strong>, 
-      <strong>${data.existingStats?.rolesCount || 0} Roles</strong>. None of these will be altered.
-    `;
-
-    // 2. AI Strategic Insights
-    const insightsList = document.getElementById('ai-insights-list');
-    if (data.recommendations && data.recommendations.length > 0) {
-      insightsList.innerHTML = data.recommendations.map(rec => `
-        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
-          <i class="fa-solid fa-arrow-right" style="color:#FFB800;font-size:10px;margin-top:4px;"></i>
-          <span>${rec}</span>
-        </div>
-      `).join('');
-    } else {
-      insightsList.innerHTML = `<span style="color:#00FFA3;"><i class="fa-solid fa-check"></i> Server matches elite gaming community standards.</span>`;
+    // Animated score bar
+    const scoreBar = document.getElementById('ai-score-bar');
+    if (scoreBar) {
+      scoreBar.style.width = '0%';
+      scoreBar.style.background = data.gradeColor || '#00FFA3';
+      setTimeout(() => { scoreBar.style.width = data.aiScore + '%'; }, 100);
     }
 
-    // 3. Actionable Checklist
+    const summaryText = document.getElementById('ai-existing-summary');
+    const typeEmoji = { streaming: '📡', gaming: '🎮', large_community: '🏙️', community: '💬' }[data.serverType] || '💬';
+    summaryText.innerHTML = `
+      ${typeEmoji} <strong>${data.typeLabel || 'Community Server'}</strong> &nbsp;•&nbsp; 
+      ${data.existingStats?.textChannelsCount || 0} Text &nbsp;•&nbsp; 
+      ${data.existingStats?.voiceChannelsCount || 0} Voice &nbsp;•&nbsp; 
+      ${data.existingStats?.rolesCount || 0} Roles &nbsp;•&nbsp;
+      <span style="color:#00FFA3;">None will be altered</span>
+    `;
+
+    // AI Priority Summary banner
+    const priorityEl = document.getElementById('ai-priority-summary');
+    if (priorityEl && data.prioritySummary) {
+      priorityEl.textContent = data.prioritySummary;
+      priorityEl.style.display = 'block';
+    }
+
+    // 2. What's already great (existingGood)
+    const existingGoodEl = document.getElementById('ai-existing-good');
+    if (existingGoodEl && data.existingGood && data.existingGood.length > 0) {
+      existingGoodEl.innerHTML = `
+        <div style="margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;">
+          <i class="fa-solid fa-shield-check" style="color:#00FFA3;"></i> Already in Good Shape:
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${data.existingGood.map(g => `
+            <span style="background:rgba(0,255,163,0.08);border:1px solid rgba(0,255,163,0.2);color:#00FFA3;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">
+              <i class="fa-solid fa-check" style="font-size:9px;margin-right:4px;"></i>${g}
+            </span>
+          `).join('')}
+        </div>
+      `;
+      existingGoodEl.style.display = 'block';
+    } else if (existingGoodEl) {
+      existingGoodEl.style.display = 'none';
+    }
+
+    // 3. AI Strategic Insights
+    const insightsList = document.getElementById('ai-insights-list');
+    if (data.recommendations && data.recommendations.length > 0) {
+      insightsList.innerHTML = data.recommendations.map((rec, i) => {
+        const isCritical = rec.toLowerCase().includes('critical') || rec.toLowerCase().includes('missing');
+        return `
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:8px;border-left:3px solid ${isCritical ? '#FF0055' : '#FFB800'};">
+            <i class="fa-solid fa-${isCritical ? 'triangle-exclamation' : 'lightbulb'}" style="color:${isCritical ? '#FF0055' : '#FFB800'};font-size:11px;margin-top:2px;flex-shrink:0;"></i>
+            <span style="font-size:12.5px;line-height:1.5;">${rec}</span>
+          </div>
+        `;
+      }).join('');
+    } else {
+      insightsList.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;color:#00FFA3;padding:10px;">
+          <i class="fa-solid fa-trophy" style="font-size:20px;"></i>
+          <span>Your server matches elite gaming community standards. Nothing to improve!</span>
+        </div>`;
+    }
+
+    // 4. Actionable Missing Items Checklist
     const missingList = document.getElementById('audit-missing-list');
     const btnApply = document.getElementById('btn-apply-safe');
+    const priorityColors = { critical: '#FF0055', high: '#FFB800', medium: '#00C8FF', low: '#8c93a8' };
+    const priorityLabels = { critical: '🚨 CRITICAL', high: '⚠️ HIGH', medium: '💡 MEDIUM', low: '✨ NICE TO HAVE' };
 
     if (!data.missingItems || data.missingItems.length === 0) {
-      missingList.innerHTML = `<p style="color:#00FFA3;margin:0;"><i class="fa-solid fa-check-double"></i> 100% Fully Optimized! No missing channels or roles detected.</p>`;
+      missingList.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+          <i class="fa-solid fa-trophy" style="font-size:28px;color:#00FFA3;display:block;margin-bottom:8px;"></i>
+          <p style="color:#00FFA3;font-weight:700;margin:0;">100% Fully Optimized!</p>
+          <p style="color:var(--text-muted);font-size:12px;margin:4px 0 0 0;">No missing channels or roles detected by AI.</p>
+        </div>`;
       btnApply.disabled = true;
       btnApply.style.opacity = '0.5';
       btnApply.innerHTML = `<i class="fa-solid fa-check"></i> Server is Fully Up to Date`;
     } else {
-      missingList.innerHTML = data.missingItems.map(item => `
-        <div style="padding:6px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <i class="${item.type === 'role' ? 'fa-solid fa-crown' : item.type === 'voice' ? 'fa-solid fa-volume-high' : 'fa-solid fa-hashtag'}" style="color:${item.type === 'role' ? '#D8B4FE' : '#00FFA3'};font-size:12px;"></i>
-            <span style="color:#fff;font-weight:600;">${item.name}</span>
-            <span style="color:var(--text-dim);font-size:11px;">(${item.category || 'Role'})</span>
+      missingList.innerHTML = data.missingItems.map(item => {
+        const pColor = priorityColors[item.priority] || '#00FFA3';
+        const pLabel = priorityLabels[item.priority] || 'RECOMMENDED';
+        const icon = item.type === 'role' ? 'fa-crown' : item.type === 'voice' ? 'fa-volume-high' : 'fa-hashtag';
+        const iconColor = item.type === 'role' ? '#D8B4FE' : item.type === 'voice' ? '#00C8FF' : '#00FFA3';
+        return `
+          <div style="padding:10px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
+              <i class="fa-solid ${icon}" style="color:${iconColor};font-size:13px;margin-top:2px;flex-shrink:0;"></i>
+              <div>
+                <div style="color:#fff;font-weight:700;font-size:13px;">${item.name}</div>
+                <div style="color:var(--text-muted);font-size:11px;margin-top:2px;">${item.reason || ''}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+              <span style="font-size:10px;color:${pColor};background:rgba(${pColor === '#FF0055' ? '255,0,85' : pColor === '#FFB800' ? '255,184,0' : '0,200,255'},0.1);padding:2px 8px;border-radius:4px;font-weight:700;border:1px solid ${pColor}33;">${pLabel}</span>
+              <span style="font-size:10px;color:var(--text-dim);">${item.category || 'GENERAL'}</span>
+            </div>
           </div>
-          <span style="font-size:11px;color:#00FFA3;background:rgba(0,255,163,0.1);padding:2px 8px;border-radius:4px;">AI Recommended</span>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       btnApply.disabled = false;
       btnApply.style.opacity = '1';
       btnApply.innerHTML = `<i class="fa-solid fa-sparkles"></i> APPLY ${data.missingItems.length} AI UPGRADES (SAFE 1-CLICK)`;
@@ -1230,7 +1303,8 @@ async function runAIAudit() {
     loading.style.display = 'none';
     results.style.display = 'block';
     document.getElementById('ai-grade-text').textContent = 'AI Scan Error';
-    document.getElementById('ai-existing-summary').innerHTML = `<span style="color:var(--danger);">${err.message}</span>`;
+    document.getElementById('ai-existing-summary').innerHTML = `<span style="color:var(--danger);">Error: ${err.message}</span>`;
+    console.error('[AI Audit]', err);
   }
 }
 
