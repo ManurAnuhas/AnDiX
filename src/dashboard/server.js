@@ -372,48 +372,44 @@ function createServer(client) {
     res.json(payments);
   });
 
-  // Get User's Managed Discord Servers (Only where user is Owner, Admin, or Moderator)
+  // Get User's Managed Discord Servers (Both where Bot is present AND where Bot can be invited)
   app.get('/api/client/managed-servers', auth.requireAuth, async (req, res) => {
     const user = db.findUserById(req.user.id);
     const userDiscordId = user?.discordId || req.user.discordId;
     const adminGuilds = user?.adminGuilds || [];
 
-    const managedGuilds = [];
+    const activeServers = [];
+    const invitableServers = [];
+    const addedGuildIds = new Set();
 
+    // 1. Process guilds where Bot is currently present
     for (const [guildId, guild] of client.guilds.cache) {
       let isAllowed = false;
       let userRoleTitle = 'Member';
 
-      // 1. Check if user is the Server Owner directly on discord.js guild
       if (userDiscordId && guild.ownerId === userDiscordId) {
         isAllowed = true;
         userRoleTitle = '👑 Server Owner';
       }
 
-      // 2. Check if this server is inside user's OAuth adminGuilds list
       if (!isAllowed && adminGuilds.length > 0) {
-        const foundInOAuth = adminGuilds.find(ag => ag.id === guild.id);
-        if (foundInOAuth) {
+        const found = adminGuilds.find(ag => ag.id === guild.id);
+        if (found) {
           isAllowed = true;
-          userRoleTitle = foundInOAuth.isOwner ? '👑 Server Owner' : '🛡️ Administrator / Mod';
+          userRoleTitle = found.isOwner ? '👑 Server Owner' : '🛡️ Administrator / Mod';
         }
       }
 
-      // 3. Fallback: Check guild member in cache or fetch
       if (!isAllowed && userDiscordId) {
         try {
-          let member = guild.members.cache.get(userDiscordId);
-          if (!member) {
-            member = await guild.members.fetch(userDiscordId).catch(() => null);
-          }
+          const member = guild.members.cache.get(userDiscordId) || await guild.members.fetch(userDiscordId).catch(() => null);
           if (member) {
             if (member.permissions.has(PermissionFlagsBits.Administrator)) {
               isAllowed = true;
               userRoleTitle = '🛡️ Administrator';
             } else if (
               member.permissions.has(PermissionFlagsBits.ManageGuild) ||
-              member.permissions.has(PermissionFlagsBits.ModerateMembers) ||
-              member.permissions.has(PermissionFlagsBits.ManageMessages)
+              member.permissions.has(PermissionFlagsBits.ModerateMembers)
             ) {
               isAllowed = true;
               userRoleTitle = '⚔️ Moderator';
@@ -422,26 +418,45 @@ function createServer(client) {
         } catch (e) {}
       }
 
-      // 4. Fallback: If user manually linked this server, allow it
       if (!isAllowed && user?.discordServerId === guild.id) {
         isAllowed = true;
-        userRoleTitle = 'Linked Community';
+        userRoleTitle = 'Linked Server';
       }
 
       if (isAllowed) {
-        managedGuilds.push({
+        addedGuildIds.add(guild.id);
+        activeServers.push({
           id: guild.id,
           name: guild.name,
           icon: guild.iconURL({ dynamic: true }) || 'https://cdn-icons-png.flaticon.com/512/5968/5968756.png',
           memberCount: guild.memberCount,
-          roleTitle: userRoleTitle
+          roleTitle: userRoleTitle,
+          botPresent: true
+        });
+      }
+    }
+
+    // 2. Process other servers where User is Owner/Admin but Bot is NOT YET invited!
+    for (const ag of adminGuilds) {
+      if (!addedGuildIds.has(ag.id)) {
+        addedGuildIds.add(ag.id);
+        const iconUrl = ag.icon ? `https://cdn.discordapp.com/icons/${ag.id}/${ag.icon}.png` : 'https://cdn-icons-png.flaticon.com/512/5968/5968756.png';
+        invitableServers.push({
+          id: ag.id,
+          name: ag.name,
+          icon: iconUrl,
+          memberCount: '—',
+          roleTitle: ag.isOwner ? '👑 Server Owner' : '🛡️ Administrator / Mod',
+          botPresent: false,
+          inviteUrl: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || '1565283272072761424'}&guild_id=${ag.id}&permissions=8&integration_type=0&scope=bot+applications.commands`
         });
       }
     }
 
     res.json({
-      servers: managedGuilds,
-      count: managedGuilds.length
+      activeServers,
+      invitableServers,
+      servers: [...activeServers, ...invitableServers]
     });
   });
 

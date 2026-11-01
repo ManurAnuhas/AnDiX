@@ -42,32 +42,173 @@
     }
     .nav-user strong { color: var(--text-main); }
     .dash-main {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 32px 24px 60px;
+      padding: 32px 24px 80px;
       display: flex;
       flex-direction: column;
       gap: 24px;
     }
     .page-title {
       font-family: var(--font-heading);
-      font-size: 22px;
-      color: var(--text-main);
-      margin-bottom: 4px;
+      font-size: 24px;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
     .page-sub { color: var(--text-muted); font-size: 14px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
+      background: rgba(13, 15, 26, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(153,69,255,0.18);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      border-radius: 14px;
       padding: 20px 24px;
       display: flex;
       align-items: center;
       gap: 16px;
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      border-color: rgba(153,69,255,0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(153,69,255,0.12);
     }
     .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .stat-icon.purple { background: rgba(153,69,255,0.15); color: var(--primary); border: 1px solid rgba(153,69,255,0.3); }
+    .stat-icon.green { background: rgba(0,255,163,0.15); color: var(--success); border: 1px solid rgba(0,255,163,0.3); }
+    .stat-icon.blue { background: rgba(0,200,255,0.15); color: var(--info); border: 1px solid rgba(0,200,255,0.3); }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+    .stat-value { font-family: var(--font-heading); font-size: 17px; color: #fff; font-weight: 700; }
+
+    /* Modern Control Center Glass Container */
+    .control-center-card {
+      background: rgba(13, 15, 26, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(153, 69, 255, 0.25);
+      border-radius: 18px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(153,69,255,0.08);
+      overflow: hidden;
+    }
+    .control-center-head {
+      padding: 22px 28px;
+      background: linear-gradient(90deg, rgba(153,69,255,0.12) 0%, rgba(9,10,15,0.4) 100%);
+      border-bottom: 1px solid rgba(153,69,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .server-custom-select {
+      background: #090a12;
+      border: 1px solid rgba(153,69,255,0.4);
+      color: #fff;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+      min-width: 280px;
+    }
+    .server-custom-select:hover, .server-custom-select:focus {
+      border-color: #9945FF;
+      box-shadow: 0 0 14px rgba(153,69,255,0.3);
+    }
+    .server-custom-select optgroup {
+      background: #0d0f1c;
+      color: #00FFA3;
+      font-weight: 700;
+      padding: 8px 4px;
+    }
+    .server-custom-select optgroup[label*="Invite"] {
+      color: #D8B4FE;
+    }
+    .server-custom-select option {
+      background: #121422;
+      color: #f0f2ff;
+      font-weight: 500;
+      padding: 8px 12px;
+    }
+
+    /* Active Server Hero Banner */
+    .server-hero-banner {
+      background: linear-gradient(135deg, rgba(88,101,242,0.15) 0%, rgba(153,69,255,0.1) 50%, rgba(0,255,163,0.05) 100%);
+      border: 1px solid rgba(153,69,255,0.3);
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .server-hero-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(153,69,255,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Studio Tabs Navigation */
+    .studio-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      background: rgba(9, 10, 15, 0.65);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .studio-tab-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+    .studio-tab-btn i { font-size: 14px; }
+    .studio-tab-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.04);
+    }
+    .studio-tab-btn.active {
+      background: linear-gradient(135deg, #9945FF 0%, #7A1FD6 100%);
+      color: #fff;
+      border-color: rgba(153,69,255,0.5);
+      box-shadow: 0 4px 18px rgba(153,69,255,0.4);
+    }
       width: 48px; height: 48px;
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
@@ -295,24 +436,29 @@
     </div>
 
     <!-- Server Management (Primary Focus) -->
-    <div class="section-card" id="server-mgmt-card">
-      <div class="section-head">
-        <h3><i class="fas fa-cogs"></i> Discord Server Control Center</h3>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <select id="server-dropdown-select" onchange="onServerSelectChange(this.value)" style="background:var(--bg-input);border:1px solid var(--border-color);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;outline:none;cursor:pointer;">
+    <div class="control-center-card" id="server-mgmt-card">
+      <div class="control-center-head">
+        <div>
+          <h3 style="font-family:var(--font-heading);font-size:18px;color:#fff;margin:0 0 4px 0;display:flex;align-items:center;gap:10px;">
+            <i class="fa-solid fa-gamepad" style="color:var(--primary);"></i> Discord Server Control Center
+          </h3>
+          <span style="font-size:12px;color:var(--text-muted);">Manage and optimize any server where you are Owner, Administrator, or Moderator</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select id="server-dropdown-select" class="server-custom-select" onchange="onServerSelectChange(this.value)">
             <option value="">Loading servers...</option>
           </select>
-          <span class="badge success" id="linked-server-badge">Ready</span>
+          <span class="badge success" id="linked-server-badge" style="padding:6px 14px;font-size:12px;letter-spacing:0.5px;">Ready</span>
         </div>
       </div>
-      <div class="section-body" id="server-mgmt-body">
+      <div class="section-body" id="server-mgmt-body" style="padding:28px;">
         
         <!-- Active Server Banner with Bot Invite Shortcut -->
-        <div style="background: linear-gradient(135deg, rgba(88,101,242,0.14) 0%, rgba(0,255,163,0.08) 100%); border: 1px solid rgba(88,101,242,0.3); border-radius: 12px; padding: 18px 22px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <img id="active-server-icon" src="logo.png" alt="Server Icon" style="width:48px;height:48px;border-radius:50%;border:2px solid var(--primary);object-fit:cover;">
+        <div class="server-hero-banner">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <img id="active-server-icon" src="logo.png" alt="Server Icon" style="width:54px;height:54px;border-radius:14px;border:2px solid var(--primary);object-fit:cover;box-shadow:0 0 16px rgba(153,69,255,0.4);">
             <div>
-              <h4 id="active-server-name" style="color:#fff; font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+              <h4 id="active-server-name" style="color:#fff; font-size:18px; margin-bottom:4px; display:flex; align-items:center; gap:8px; font-family:var(--font-heading);">
                 Loading Server...
               </h4>
               <p id="active-server-sub" style="color:var(--text-muted); font-size:13px; margin:0;">
@@ -320,19 +466,21 @@
               </p>
             </div>
           </div>
-          <a id="bot-invite-link" href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream" style="padding:10px 20px; flex-shrink:0;">
-            <i class="fa-solid fa-plus"></i> Add to Another Server
-          </a>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <a id="bot-invite-link" href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream" style="padding:11px 22px; flex-shrink:0;">
+              <i class="fa-solid fa-plus"></i> Add to Another Server
+            </a>
+          </div>
         </div>
 
         <div id="mgmt-unlocked">
-          <!-- Tabs -->
-          <div class="tabs" style="flex-wrap:wrap;">
-            <button class="tab-btn active" onclick="switchTab('tab-setup')"><i class="fas fa-wand-magic-sparkles"></i> 1-Click Server Setup</button>
-            <button class="tab-btn" onclick="switchTab('tab-stream')"><i class="fas fa-tower-broadcast"></i> Stream Alert</button>
-            <button class="tab-btn" onclick="switchTab('tab-automod')"><i class="fa-solid fa-shield-halved"></i> AutoMod Protection</button>
-            <button class="tab-btn" onclick="switchTab('tab-announce')"><i class="fas fa-bullhorn"></i> Announce</button>
-            <button class="tab-btn" onclick="switchTab('tab-link')"><i class="fas fa-link"></i> Custom Server ID</button>
+          <!-- Studio Tabs Navigation -->
+          <div class="studio-tabs">
+            <button class="studio-tab-btn active" onclick="switchTab('tab-setup', this)"><i class="fas fa-wand-magic-sparkles"></i> 1-Click Server Setup</button>
+            <button class="studio-tab-btn" onclick="switchTab('tab-stream', this)"><i class="fas fa-tower-broadcast"></i> Stream Alert</button>
+            <button class="studio-tab-btn" onclick="switchTab('tab-automod', this)"><i class="fa-solid fa-shield-halved"></i> AutoMod Protection</button>
+            <button class="studio-tab-btn" onclick="switchTab('tab-announce', this)"><i class="fas fa-bullhorn"></i> Announce</button>
+            <button class="studio-tab-btn" onclick="switchTab('tab-link', this)"><i class="fas fa-link"></i> Custom Server ID</button>
           </div>
 
           <!-- Tab: Auto Setup (AnDiX AI Server Architect) -->
@@ -603,66 +751,139 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 let cachedGuilds = [];
+let cachedActiveServers = [];
+let cachedInvitableServers = [];
 
 async function loadServers() {
   const token = localStorage.getItem('andix_token');
   try {
-    // Fetch ONLY servers where the logged-in user has Owner, Admin, or Moderator permissions
     const res = await fetch(`${API}/api/client/managed-servers`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
-    cachedGuilds = data.servers || [];
+    cachedActiveServers = data.activeServers || [];
+    cachedInvitableServers = data.invitableServers || [];
+    cachedGuilds = data.servers || [...cachedActiveServers, ...cachedInvitableServers];
 
     const select = document.getElementById('server-dropdown-select');
     if (!select) return;
 
     if (!cachedGuilds.length) {
       select.innerHTML = '<option value="">No managed servers found</option>';
-      document.getElementById('active-server-name').textContent = 'No Servers with Admin Access';
-      document.getElementById('active-server-sub').textContent = 'You must be a Server Owner, Admin, or Moderator in a server where AnDiX is present.';
+      document.getElementById('active-server-name').textContent = 'No Discord Servers Found';
+      document.getElementById('active-server-sub').textContent = 'You do not have Owner, Admin, or Moderator permissions in any Discord server.';
       return;
     }
 
-    select.innerHTML = cachedGuilds.map(g => `
-      <option value="${g.id}" ${g.id === linkedServerId ? 'selected' : ''}>
-        ${g.name} (${g.memberCount} members) — ${g.roleTitle || 'Admin'}
-      </option>
-    `).join('');
+    let optionsHtml = '';
 
-    // Auto-select the first managed server if none currently active
-    if (!linkedServerId || !cachedGuilds.some(g => g.id === linkedServerId)) {
-      linkedServerId = cachedGuilds[0].id;
+    if (cachedActiveServers.length > 0) {
+      optionsHtml += `<optgroup label="🟢 Active Servers (AnDiX Connected)">`;
+      optionsHtml += cachedActiveServers.map(g => `
+        <option value="${g.id}" ${g.id === linkedServerId ? 'selected' : ''}>
+          ${g.name} (${g.memberCount} members) — ${g.roleTitle || 'Admin'}
+        </option>
+      `).join('');
+      optionsHtml += `</optgroup>`;
     }
 
-    updateActiveServerDisplay(linkedServerId);
+    if (cachedInvitableServers.length > 0) {
+      optionsHtml += `<optgroup label="➕ Invite AnDiX to Your Servers">`;
+      optionsHtml += cachedInvitableServers.map(g => `
+        <option value="invite:${g.id}">
+          ➕ Add to: ${g.name} — ${g.roleTitle || 'Admin'}
+        </option>
+      `).join('');
+      optionsHtml += `</optgroup>`;
+    }
+
+    select.innerHTML = optionsHtml;
+
+    // Auto-select first active server if none currently active
+    if (!linkedServerId || !cachedActiveServers.some(g => g.id === linkedServerId)) {
+      if (cachedActiveServers.length > 0) {
+        linkedServerId = cachedActiveServers[0].id;
+      } else if (cachedInvitableServers.length > 0) {
+        linkedServerId = null;
+      }
+    }
+
+    if (linkedServerId) {
+      select.value = linkedServerId;
+      updateActiveServerDisplay(linkedServerId);
+    } else if (cachedInvitableServers.length > 0) {
+      updateActiveServerDisplay(null);
+    }
   } catch (e) {
     console.error('Failed to load managed servers:', e);
   }
 }
 
 function updateActiveServerDisplay(guildId) {
+  if (!guildId) {
+    document.getElementById('active-server-name').innerHTML = `<i class="fa-brands fa-discord" style="color:var(--primary);"></i> Select or Invite Server`;
+    document.getElementById('active-server-sub').textContent = 'Invite AnDiX to one of your servers using the dropdown above to unlock full controls.';
+    document.getElementById('linked-server-badge').className = 'badge warning';
+    document.getElementById('linked-server-badge').textContent = 'No Active Server';
+    return;
+  }
+
   const guild = cachedGuilds.find(g => g.id === guildId);
   if (guild) {
+    const isBotPresent = guild.botPresent !== false;
     document.getElementById('active-server-name').innerHTML = `
-      <i class="fa-brands fa-discord" style="color:var(--primary);"></i>
+      <i class="fa-brands fa-discord" style="color:${isBotPresent ? '#00FFA3' : '#9945FF'};"></i>
       ${guild.name}
     `;
-    document.getElementById('active-server-sub').textContent = `Server ID: ${guild.id} • ${guild.memberCount} Active Members • Fully Managed by AnDiX`;
+    
+    if (isBotPresent) {
+      document.getElementById('active-server-sub').textContent = `Server ID: ${guild.id} • ${guild.memberCount} Active Members • Fully Managed by AnDiX`;
+      document.getElementById('linked-server-badge').className = 'badge success';
+      document.getElementById('linked-server-badge').textContent = `Active: ${guild.name}`;
+      const inviteBtn = document.getElementById('bot-invite-link');
+      if (inviteBtn) {
+        inviteBtn.style.display = 'inline-flex';
+        inviteBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Add to Another Server`;
+      }
+    } else {
+      document.getElementById('active-server-sub').textContent = `Server ID: ${guild.id} • Bot Not Invited Yet • Click Invite to Connect!`;
+      document.getElementById('linked-server-badge').className = 'badge warning';
+      document.getElementById('linked-server-badge').textContent = `Bot Not Added`;
+      const inviteBtn = document.getElementById('bot-invite-link');
+      if (inviteBtn) {
+        inviteBtn.style.display = 'inline-flex';
+        inviteBtn.href = guild.inviteUrl || "https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands";
+        inviteBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Invite Bot to ${guild.name}`;
+      }
+    }
+
     if (guild.icon) {
       document.getElementById('active-server-icon').src = guild.icon;
     }
     document.getElementById('stat-server').textContent = guild.name;
-    document.getElementById('linked-server-badge').textContent = `Active: ${guild.name}`;
     const idInput = document.getElementById('server-id-input');
     if (idInput) idInput.value = guild.id;
   }
 }
 
-async function onServerSelectChange(guildId) {
-  if (!guildId) return;
-  linkedServerId = guildId;
-  updateActiveServerDisplay(guildId);
+async function onServerSelectChange(val) {
+  if (!val) return;
+
+  // Check if user selected an invitable server option
+  if (val.startsWith('invite:')) {
+    const guildId = val.replace('invite:', '');
+    const target = cachedInvitableServers.find(g => g.id === guildId);
+    const inviteUrl = target?.inviteUrl || `https://discord.com/oauth2/authorize?client_id=1565283272072761424&guild_id=${guildId}&permissions=8&integration_type=0&scope=bot+applications.commands`;
+    showToast(`Opening Discord invite for "${target?.name || 'Server'}"...`, 'info');
+    window.open(inviteUrl, '_blank');
+    // Reset dropdown value to current active
+    const select = document.getElementById('server-dropdown-select');
+    if (select && linkedServerId) select.value = linkedServerId;
+    return;
+  }
+
+  linkedServerId = val;
+  updateActiveServerDisplay(val);
   
   // Link to account on backend
   const token = localStorage.getItem('andix_token');
@@ -671,7 +892,7 @@ async function onServerSelectChange(guildId) {
       await fetch(`${API}/api/client/link-server`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ serverId: guildId })
+        body: JSON.stringify({ serverId: val })
       });
       showToast('Switched active server!', 'success');
     } catch (e) {}
@@ -1094,11 +1315,16 @@ async function sendAnnouncement() {
   }
 }
 
-function switchTab(id) {
+function switchTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
+  document.querySelectorAll('.tab-btn, .studio-tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById(id);
+  if (panel) panel.classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+  } else if (window.event && window.event.target) {
+    window.event.target.classList.add('active');
+  }
 }
 
 function logout() {

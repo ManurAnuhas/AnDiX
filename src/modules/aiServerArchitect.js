@@ -17,25 +17,41 @@ const aiServerArchitect = {
     const roles = guild.roles.cache;
     const memberCount = guild.memberCount || 0;
 
-    const textChannels = channels.filter(c => c.isTextBased() && !c.isVoiceBased()).map(c => c.name.toLowerCase());
-    const voiceChannels = channels.filter(c => c.isVoiceBased()).map(c => c.name.toLowerCase());
-    const roleNames = roles.map(r => r.name.toLowerCase());
+    // Helper to sanitize channel & role names (stripping emojis, symbols, spaces)
+    const clean = (str) => (str || '').toLowerCase().replace(/[^\w]/g, '');
 
-    // 1. Audit Checks
-    const hasWelcome = textChannels.some(c => c.includes('welcome') || c.includes('joins') || c.includes('start'));
-    const hasRules = textChannels.some(c => c.includes('rules') || c.includes('guidelines') || c.includes('terms'));
-    const hasAnnounce = textChannels.some(c => c.includes('announce') || c.includes('news') || c.includes('updates'));
-    const hasLiveAlerts = textChannels.some(c => c.includes('live') || c.includes('stream') || c.includes('twitch') || c.includes('youtube'));
-    const hasModLogs = textChannels.some(c => c.includes('log') || c.includes('audit') || c.includes('mod-logs') || c.includes('staff'));
-    const hasMemes = textChannels.some(c => c.includes('meme') || c.includes('clips') || c.includes('media'));
-    const hasLobby = textChannels.some(c => c.includes('lfg') || c.includes('group') || c.includes('squad') || c.includes('looking'));
+    const textChannels = channels.filter(c => c.isTextBased() && !c.isVoiceBased());
+    const voiceChannels = channels.filter(c => c.isVoiceBased());
 
-    const hasAdminRole = roleNames.some(r => r.includes('admin') || r.includes('owner'));
-    const hasModRole = roleNames.some(r => r.includes('mod') || r.includes('staff'));
-    const hasGamerRole = roleNames.some(r => r.includes('gamer') || r.includes('member') || r.includes('squad'));
-    const hasStreamPingRole = roleNames.some(r => r.includes('stream') || r.includes('live') || r.includes('notify'));
+    const cleanTextNames = textChannels.map(c => clean(c.name));
+    const cleanVoiceNames = voiceChannels.map(c => clean(c.name));
+    const cleanRoleNames = roles.map(r => clean(r.name));
 
-    const hasDynamicVoice = voiceChannels.some(c => c.includes('join') || c.includes('create') || c.includes('hub'));
+    // Deep Channel Checking (checks channel name + topic + category)
+    const hasChannelMatching = (keywords) => {
+      return textChannels.some(c => {
+        const cName = clean(c.name);
+        const cTopic = clean(c.topic);
+        const catName = clean(c.parent?.name);
+        return keywords.some(k => cName.includes(k) || cTopic.includes(k) || catName.includes(k));
+      });
+    };
+
+    // 1. Audit Checks (Ultra-Accurate Multi-Keyword Detection)
+    const hasWelcome = hasChannelMatching(['welcome', 'welcomes', 'welcomechat', 'joins', 'memberjoins', 'start', 'entrance', 'lobby', 'hi', 'landing']);
+    const hasRules = hasChannelMatching(['rules', 'rule', 'guidelines', 'serverrules', 'communityrules', 'terms', 'regulations']);
+    const hasAnnounce = hasChannelMatching(['announce', 'announcements', 'news', 'updates', 'broadcast']);
+    const hasLiveAlerts = hasChannelMatching(['livealerts', 'streamalerts', 'streams', 'live', 'youtube', 'twitch', 'kick', 'streamannouncements']);
+    const hasModLogs = hasChannelMatching(['modlogs', 'auditlogs', 'botlogs', 'actionlogs', 'logs', 'stafflogs', 'serverlogs', 'audit']);
+    const hasMemes = hasChannelMatching(['meme', 'memes', 'media', 'clips', 'highlights', 'art']);
+    const hasLobby = hasChannelMatching(['lookingforgroup', 'lfg', 'squad', 'squadchat', 'duo', 'trio', 'team', 'gaming']);
+
+    const hasAdminRole = cleanRoleNames.some(r => r.includes('admin') || r.includes('owner') || r.includes('creator') || r.includes('founder'));
+    const hasModRole = cleanRoleNames.some(r => r.includes('mod') || r.includes('moderator') || r.includes('staff') || r.includes('team'));
+    const hasGamerRole = cleanRoleNames.some(r => r.includes('gamer') || r.includes('member') || r.includes('squad') || r.includes('community') || r.includes('verified'));
+    const hasStreamPingRole = cleanRoleNames.some(r => r.includes('stream') || r.includes('live') || r.includes('notify') || r.includes('ping') || r.includes('alerts'));
+
+    const hasDynamicVoice = cleanVoiceNames.some(v => v.includes('join') || v.includes('create') || v.includes('hub') || v.includes('voicehub') || v.includes('generator'));
 
     // 2. Calculate AI Health Score
     let score = 100;
