@@ -12,6 +12,12 @@
 </head>
 <body class="auth-page">
 
+  <!-- Cyberpunk Page Loader -->
+  <div id="page-loader">
+    <div class="loader-spinner-ring"></div>
+    <div class="loader-text">ANDIX <span>PORTAL</span></div>
+  </div>
+
   <div class="auth-wrapper">
     <div class="auth-box card">
       <div class="auth-header text-center">
@@ -133,6 +139,31 @@
   </div>
 
   <script>
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        setTimeout(() => loader.classList.add('loaded'), 250);
+      }
+    });
+
+    // Persistent Login: If user is already logged in, redirect straight to dashboard
+    (function checkExistingSession() {
+      const token = localStorage.getItem('andix_token');
+      const user = localStorage.getItem('andix_user');
+      const urlParams = new URLSearchParams(window.location.search);
+      // Only auto-redirect if there is no error parameter
+      if (token && user && !urlParams.get('error') && !urlParams.get('logout')) {
+        try {
+          const parsed = JSON.parse(user);
+          if (parsed.role === 'admin') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'client.html';
+          }
+        } catch (e) {}
+      }
+    })();
+
     const tabLogin = document.getElementById('tab-btn-login');
     const tabRegister = document.getElementById('tab-btn-register');
     const formLogin = document.getElementById('form-login');
@@ -167,10 +198,14 @@
     tabLogin.addEventListener('click', () => switchMode('login'));
     tabRegister.addEventListener('click', () => switchMode('register'));
 
-    // Check URL parameters (e.g. auth.html?signup=true)
+    // Check URL parameters (e.g. auth.html?signup=true, or auth.html?error=...)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('signup') === 'true') {
       switchMode('register');
+    }
+    if (urlParams.get('error')) {
+      const err = urlParams.get('error');
+      showAlert('Discord Login Notice: ' + decodeURIComponent(err), true);
     }
 
     // Handle Login

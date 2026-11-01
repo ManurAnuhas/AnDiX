@@ -2162,6 +2162,95 @@ body.landing-page {
   100% { height: 100%; }
 }
 
+/* ==========================================================================
+   GLOBAL CYBERPUNK PAGE LOADER & DISCORD LOCK BADGE
+   ========================================================================== */
+
+#page-loader {
+  position: fixed;
+  inset: 0;
+  background: #07080c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#page-loader.loaded {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-spinner-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(153, 69, 255, 0.15);
+  border-top: 3px solid #00FFA3;
+  border-right: 3px solid #9945FF;
+  animation: loaderSpin 0.9s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  box-shadow: 0 0 25px rgba(0, 255, 163, 0.35);
+}
+
+.loader-text {
+  margin-top: 18px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loader-text span {
+  color: #00FFA3;
+}
+
+@keyframes loaderSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Discord Exclusive Feature Locked Overlay */
+.discord-locked-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.discord-lock-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 10, 15, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.discord-lock-pill {
+  background: rgba(88, 101, 242, 0.15);
+  border: 1px solid rgba(88, 101, 242, 0.4);
+  color: #5865F2;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

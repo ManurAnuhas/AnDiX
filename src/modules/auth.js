@@ -23,10 +23,11 @@ const auth = {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
-        role: user.role || 'client'
+        role: user.role || 'client',
+        isDiscordAuth: !!user.isDiscordAuth
       },
       ACTIVE_JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '365d' } // 1 Year Persistent Login - no unexpected logout
     );
   },
 

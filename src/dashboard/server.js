@@ -136,33 +136,39 @@ function createServer(client) {
     });
   });
 
+  // Helper to get bulletproof OAuth Redirect URI (Always HTTPS on cloud hosts)
+  function getDiscordRedirectUri(req) {
+    if (process.env.DISCORD_REDIRECT_URI) return process.env.DISCORD_REDIRECT_URI;
+    const host = req.get('host') || 'localhost:26118';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const protocol = isLocal ? 'http' : 'https';
+    return `${protocol}://${host}/api/auth/discord/callback`;
+  }
+
   // Discord OAuth2 Initiate
   app.get('/api/auth/discord', (req, res) => {
-    const clientId = process.env.CLIENT_ID;
-    if (!clientId) {
-      return res.status(500).send('Discord OAuth error: CLIENT_ID is not configured in environment variables.');
-    }
-    const host = req.get('host');
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/discord/callback`);
+    const clientId = process.env.CLIENT_ID || '1565283272072761424';
+    const redirectUri = encodeURIComponent(getDiscordRedirectUri(req));
     const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email%20guilds`;
     res.redirect(discordAuthUrl);
   });
 
   // Discord OAuth2 Callback
   app.get('/api/auth/discord/callback', async (req, res) => {
-    const { code } = req.query;
-    if (!code) return res.redirect('/auth.html?error=no_code');
-
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
-    if (!clientId || !clientSecret) {
-      logger.error('Discord OAuth not configured: CLIENT_ID or CLIENT_SECRET missing in environment variables.');
-      return res.redirect('/auth.html?error=oauth_not_configured');
+    const { code, error, error_description } = req.query;
+    if (error) {
+      logger.error('Discord OAuth returned error:', error, error_description);
+      return res.redirect(`/auth.html?error=${encodeURIComponent(error_description || error)}`);
     }
-    const host = req.get('host');
-    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const redirectUri = `${protocol}://${host}/api/auth/discord/callback`;
+    if (!code) return res.redirect('/auth.html?error=no_code_provided');
+
+    const clientId = process.env.CLIENT_ID || '1565283272072761424';
+    const clientSecret = process.env.CLIENT_SECRET;
+    if (!clientSecret) {
+      logger.error('Discord OAuth not configured: CLIENT_SECRET missing in environment variables.');
+      return res.redirect('/auth.html?error=CLIENT_SECRET+is+missing+in+Bot+Hosting+environment+variables');
+    }
+    const redirectUri = getDiscordRedirectUri(req);
 
     try {
       const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
@@ -180,7 +186,7 @@ function createServer(client) {
       const tokenData = await tokenRes.json();
       if (!tokenData.access_token) {
         logger.error('Discord OAuth Token Error:', tokenData);
-        return res.redirect('/auth.html?error=token_failed');
+        return res.redirect(`/auth.html?error=${encodeURIComponent(tokenData.error_description || tokenData.error || 'Token exchange failed')}`);
       }
 
       const userRes = await fetch('https://discord.com/api/users/@me', {
@@ -191,14 +197,20 @@ function createServer(client) {
       const email = discordUser.email || `${discordUser.id}@discord.user`;
       let user = db.findUserByEmail(email);
 
+      const isFreeMode = config.saas?.freeTrialMode === true;
+      const discordTag = discordUser.discriminator && discordUser.discriminator !== '0' 
+        ? `${discordUser.username}#${discordUser.discriminator}` 
+        : `@${discordUser.username}`;
+
       if (!user) {
-        const isFreeMode = config.saas?.freeTrialMode === true;
         user = db.createUser({
           fullName: discordUser.global_name || discordUser.username,
           email: email.toLowerCase(),
           passwordHash: 'DISCORD_OAUTH_ACCOUNT',
-          discordTag: `${discordUser.username}#${discordUser.discriminator || '0'}`,
-          discordServerName: '',
+          discordTag: discordTag,
+          discordId: discordUser.id,
+          avatar: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null,
+          isDiscordAuth: true,
           role: 'client',
           subscription: {
             status: isFreeMode ? 'active' : 'pending_payment',
@@ -206,32 +218,49 @@ function createServer(client) {
             monthlyFeeLkr: 0,
             setupFeeLkr: 0,
             activatedAt: isFreeMode ? Date.now() : null,
-            expiresAt: isFreeMode ? (Date.now() + 60 * 24 * 60 * 60 * 1000) : null
+            expiresAt: isFreeMode ? (Date.now() + 365 * 24 * 60 * 60 * 1000) : null
           }
         });
+      } else {
+        // Upgrade existing account with verified Discord authentication
+        user.isDiscordAuth = true;
+        user.discordTag = discordTag;
+        user.discordId = discordUser.id;
+        if (discordUser.avatar) {
+          user.avatar = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
+        }
       }
 
       const jwtToken = auth.generateToken(user);
       res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>Logging in...</title></head>
-        <body style="background:#090a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
-          <div style="text-align:center;">
-            <h2>✔ Discord Login Successful!</h2>
-            <p>Redirecting to your Dashboard...</p>
+        <head>
+          <title>Logging in...</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link rel="stylesheet" href="/styles.css">
+        </head>
+        <body style="background:#090a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;">
+          <div style="text-align:center;padding:24px;">
+            <div style="width:50px;height:50px;border:3px solid rgba(88,101,242,0.2);border-top:3px solid #5865F2;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+            <h2 style="font-family:'Orbitron',sans-serif;font-size:18px;margin-bottom:8px;color:#00FFA3;">Discord Verified!</h2>
+            <p style="color:#8c93a8;font-size:13px;">Unlocking client dashboard & bot options...</p>
           </div>
+          <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
           <script>
             localStorage.setItem('andix_token', '${jwtToken}');
             localStorage.setItem('andix_user', JSON.stringify(${JSON.stringify(user)}));
-            window.location.href = '/client.html';
+            localStorage.setItem('andix_discord_auth', 'true');
+            setTimeout(() => {
+              window.location.href = '/client.html';
+            }, 600);
           </script>
         </body>
         </html>
       `);
     } catch (err) {
       logger.error('OAuth Callback Exception:', err);
-      res.redirect('/auth.html?error=server_error');
+      res.redirect('/auth.html?error=' + encodeURIComponent(err.message));
     }
   });
 

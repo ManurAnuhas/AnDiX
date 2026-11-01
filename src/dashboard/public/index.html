@@ -12,6 +12,12 @@
 </head>
 <body class="landing-page">
 
+  <!-- Cyberpunk Page Loader -->
+  <div id="page-loader">
+    <div class="loader-spinner-ring"></div>
+    <div class="loader-text">ANDIX <span>LOADING</span></div>
+  </div>
+
   <!-- Glow Background Spheres -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
@@ -387,6 +393,13 @@
   </footer>
 
   <script>
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        setTimeout(() => loader.classList.add('loaded'), 250);
+      }
+    });
+
     function switchPrevTab(tabId) {
       document.querySelectorAll('.prev-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.prev-tab-btn').forEach(b => b.classList.remove('active'));
