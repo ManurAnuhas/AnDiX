@@ -113,41 +113,43 @@
             <button class="prev-tab-btn" onclick="switchPrevTab('prev-arch')"><i class="fa-solid fa-server"></i> Server Architect</button>
           </div>
 
-          <!-- Preview 0: Music Player (New) -->
+          <!-- Preview 0: Music Player (Real Discord Look) -->
           <div id="prev-music" class="prev-content active">
-            <div class="discord-msg-card">
-              <div class="msg-header">
-                <img class="avatar" src="logo.png" alt="Bot">
+            <div class="discord-msg-card" style="background:#313338;border:none;border-radius:8px;padding:16px;">
+              <div class="msg-header" style="margin-bottom:8px;">
+                <img class="avatar" src="logo.png" alt="Bot" style="border-radius:50%;width:40px;height:40px;">
                 <div class="msg-author">
-                  <span class="bot-name">AnDiX Music</span>
-                  <span class="bot-tag">LAVALINK v4</span>
-                  <span class="time">Playing now</span>
+                  <span class="bot-name" style="color:#f2f3f5;font-weight:600;">AnDiX</span>
+                  <span class="bot-tag" style="background:#5865F2;border-radius:3px;font-size:10px;padding:2px 5px;">APP</span>
+                  <span class="time" style="color:#949ba4;">Today at 2:42 AM</span>
                 </div>
               </div>
-              <div class="discord-embed" style="border-left: 4px solid var(--success);">
-                <div class="embed-body">
-                  <div class="embed-author" style="color:var(--success);display:flex;align-items:center;gap:6px;">
-                    <i class="fa-brands fa-spotify" style="font-size:16px;"></i> NOW STREAMING IN HIGH DEFINITION
+              <div class="discord-embed" style="background:#2b2d31;border-left:4px solid #00FFA3;border-radius:4px;padding:14px 16px;">
+                <div class="embed-body" style="padding:0;">
+                  <div class="embed-author" style="color:#00FFA3;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;">
+                    <i class="fa-solid fa-music"></i> NOW PLAYING
                   </div>
-                  <h4 class="embed-title" style="color:#fff;">Praveen Madhubhashana - Paata As (පාට ඇස්) ft. DILUBeats</h4>
-                  <div class="embed-fields">
-                    <div><strong>Duration:</strong> 5:26</div>
-                    <div><strong>Engine:</strong> Lavalink 64-bit Audio</div>
-                    <div><strong>Quality:</strong> 320kbps Lossless</div>
+                  <h4 class="embed-title" style="color:#fff;font-size:15px;margin:6px 0;">Praveen Madhubhashana - Paata As (පාට ඇස්) ft. DILUBeats</h4>
+                  <div class="embed-fields" style="background:transparent;padding:0;gap:18px;margin-bottom:8px;">
+                    <div><span style="color:#949ba4;font-size:12px;">⏱ Duration:</span> <strong style="color:#dbdee1;">5:26</strong></div>
+                    <div><span style="color:#949ba4;font-size:12px;">👤 Requested By:</span> <strong style="color:#5865F2;">@_anuxd</strong></div>
                   </div>
-                  <div class="music-live-bar">
-                    <div class="music-equalizer">
-                      <div class="eq-bar"></div>
-                      <div class="eq-bar"></div>
-                      <div class="eq-bar"></div>
-                      <div class="eq-bar"></div>
+                  
+                  <!-- Real Interactive Audio Timeline -->
+                  <div style="background:#1e1f22;border-radius:6px;padding:8px 12px;margin:8px 0 12px 0;">
+                    <div style="display:flex;justify-content:space-between;color:#949ba4;font-size:11px;margin-bottom:4px;font-family:monospace;">
+                      <span>2:14</span>
+                      <span>5:26</span>
                     </div>
-                    <span style="font-size:12px;color:var(--success);font-weight:600;">LIVE AUDIO STREAMING ACTIVE</span>
+                    <div style="width:100%;height:4px;background:#4e5058;border-radius:2px;overflow:hidden;">
+                      <div style="width:42%;height:100%;background:#00FFA3;box-shadow:0 0 8px #00FFA3;"></div>
+                    </div>
                   </div>
-                  <div class="embed-buttons">
-                    <button class="d-btn" style="background:#5865F2;color:#fff;"><i class="fa-solid fa-pause"></i> Pause</button>
-                    <button class="d-btn" style="background:#4f545c;color:#fff;"><i class="fa-solid fa-forward-step"></i> Skip</button>
-                    <button class="d-btn" style="background:var(--stream-red);color:#fff;"><i class="fa-solid fa-stop"></i> Stop</button>
+
+                  <div class="embed-buttons" style="margin-top:0;">
+                    <button class="d-btn" style="background:#5865F2;color:#fff;border-radius:4px;font-weight:600;"><i class="fa-solid fa-pause"></i> Pause / Resume</button>
+                    <button class="d-btn" style="background:#4e5058;color:#fff;border-radius:4px;font-weight:600;"><i class="fa-solid fa-forward-step"></i> Skip</button>
+                    <button class="d-btn" style="background:#da373c;color:#fff;border-radius:4px;font-weight:600;"><i class="fa-solid fa-stop"></i> Stop</button>
                   </div>
                 </div>
               </div>
@@ -304,45 +306,50 @@
     </div>
   </section>
 
-  <!-- Pricing Section -->
-  <section id="pricing" class="section-container">
-    <div class="section-heading text-center">
-      <span class="badge badge-accent"><i class="fa-solid fa-gift"></i> LIMITED-TIME FREE LAUNCH</span>
-      <h2>FREE TRIAL ACCESS FOR STREAMERS & GAMERS</h2>
-      <p>Invite AnDiX to your Discord Server for free today through our official website portal!</p>
+  <!-- Pricing Section (Wide Single Row Horizontal Card) -->
+  <section id="pricing" class="section-container" style="max-width:1100px;margin:0 auto;padding:40px 20px;">
+    <div class="section-heading text-center" style="margin-bottom:28px;">
+      <span class="badge badge-accent"><i class="fa-solid fa-gift"></i> 100% FREE COMMUNITY PASS</span>
+      <h2>FREE ACCESS PASS FOR STREAMERS & GAMERS</h2>
+      <p>Invite AnDiX to your Discord Server today — 100% Free during our community launch period</p>
     </div>
 
     <div class="pricing-card-wrap">
-      <div class="card pricing-card popular hover-glow">
-        <div class="popular-ribbon"><i class="fa-solid fa-bolt"></i> 100% FREE ACCESS PASS</div>
-        <div class="plan-header">
-          <h3>AnDiX Full Access License</h3>
-          <p class="plan-desc">Special community release: Complete license with Web Dashboard & Server Architect</p>
-        </div>
-
-        <div class="plan-price">
-          <div class="price-main">
-            <span class="currency">LKR</span>
-            <span class="amount">0</span>
-            <span class="period" style="color:var(--success);font-weight:700;">FREE LAUNCH PASS</span>
+      <div class="card pricing-wide-banner hover-glow" style="background:linear-gradient(135deg, rgba(21,24,36,0.92) 0%, rgba(15,17,26,0.96) 100%);border:1px solid rgba(153,69,255,0.3);border-radius:16px;padding:36px;box-shadow:0 12px 40px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:32px;">
+        
+        <!-- Left: Plan Details & Features in 2 Columns -->
+        <div style="flex:1;min-width:320px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <span class="badge" style="background:rgba(0,255,163,0.15);border:1px solid #00FFA3;color:#00FFA3;padding:4px 12px;font-size:11px;font-weight:700;">100% FREE PASS</span>
+            <span style="color:var(--text-dim);font-size:13px;"><del>Originally LKR 2,000</del></span>
           </div>
-          <div class="price-sub"><del style="color:var(--text-dim);">Originally LKR 2,000 Setup</del> • <strong>100% Free Trial</strong></div>
+          <h3 style="font-family:var(--font-heading);font-size:24px;color:#fff;margin-bottom:6px;">AnDiX Community License</h3>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Full access to Web Dashboard, 24/7 Lossless Music & 1-Click Server Architect.</p>
+          
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px 24px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> 1-Click Server Architect (10s)</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> 24/7 Lossless Music (Spotify & YT)</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Multi-Platform Stream Alerts</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> AutoMod Anti-Raid Protection</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Dedicated Web Dashboard</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-main);"><i class="fa-solid fa-circle-check" style="color:var(--success);"></i> 24/7 Cloud Zero-Downtime Uptime</div>
+          </div>
         </div>
 
-        <ul class="plan-features">
-          <li><i class="fa-solid fa-circle-check"></i> 1-Click Complete Server Architect (Roles & Channels)</li>
-          <li><i class="fa-solid fa-circle-check"></i> Multi-Platform Stream Alerts (YouTube, Twitch, Kick, FB)</li>
-          <li><i class="fa-solid fa-circle-check"></i> AutoMod Anti-Spam & Anti-Raid Protection</li>
-          <li><i class="fa-solid fa-circle-check"></i> 24/7 Dedicated Cloud Hosting & Zero Downtime</li>
-          <li><i class="fa-solid fa-circle-check"></i> Full Client Web Dashboard Access</li>
-          <li><i class="fa-solid fa-circle-check"></i> Live Audit Logs & Deleted Message Tracker</li>
-          <li><i class="fa-solid fa-circle-check"></i> Support Ticket System & Reaction Roles</li>
-          <li><i class="fa-solid fa-circle-check"></i> Direct WhatsApp VIP Support Assistance</li>
-        </ul>
+        <!-- Right: Huge Price & Direct Action CTA -->
+        <div style="text-align:center;padding:24px 32px;background:rgba(9,10,15,0.6);border:1px solid var(--border-color);border-radius:14px;min-width:260px;flex-shrink:0;">
+          <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Launch Price</div>
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:14px;">
+            <span style="font-family:var(--font-heading);font-size:18px;color:var(--primary);">LKR</span>
+            <span style="font-family:var(--font-heading);font-size:44px;color:#fff;font-weight:900;">0</span>
+            <span style="color:var(--success);font-weight:700;font-size:13px;">FREE</span>
+          </div>
+          <a href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream btn-block btn-lg pulse-button" style="padding:14px 28px;font-size:14px;white-space:nowrap;">
+            <i class="fa-brands fa-discord"></i> Add to Discord Now
+          </a>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-dim);"><i class="fa-solid fa-bolt" style="color:#FFB800;"></i> Instant 10-Second Setup</div>
+        </div>
 
-        <a href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream btn-block btn-lg pulse-button">
-          <i class="fa-brands fa-discord"></i> Add AnDiX to Your Server (Free)
-        </a>
       </div>
     </div>
   </section>
