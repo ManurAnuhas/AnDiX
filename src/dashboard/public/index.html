@@ -94,13 +94,55 @@
         </div>
         <div class="window-body">
           <div class="preview-tabs">
-            <button class="prev-tab-btn active" onclick="switchPrevTab('prev-stream')"><i class="fa-solid fa-tower-broadcast"></i> Stream Alert</button>
+            <button class="prev-tab-btn active" onclick="switchPrevTab('prev-music')"><i class="fa-solid fa-music"></i> 24/7 Music Player</button>
+            <button class="prev-tab-btn" onclick="switchPrevTab('prev-stream')"><i class="fa-solid fa-tower-broadcast"></i> Stream Alert</button>
             <button class="prev-tab-btn" onclick="switchPrevTab('prev-mod')"><i class="fa-solid fa-shield-virus"></i> AutoMod Shield</button>
             <button class="prev-tab-btn" onclick="switchPrevTab('prev-arch')"><i class="fa-solid fa-server"></i> Server Architect</button>
           </div>
 
+          <!-- Preview 0: Music Player (New) -->
+          <div id="prev-music" class="prev-content active">
+            <div class="discord-msg-card">
+              <div class="msg-header">
+                <img class="avatar" src="logo.png" alt="Bot">
+                <div class="msg-author">
+                  <span class="bot-name">AnDiX Music</span>
+                  <span class="bot-tag">LAVALINK v4</span>
+                  <span class="time">Playing now</span>
+                </div>
+              </div>
+              <div class="discord-embed" style="border-left: 4px solid var(--success);">
+                <div class="embed-body">
+                  <div class="embed-author" style="color:var(--success);display:flex;align-items:center;gap:6px;">
+                    <i class="fa-brands fa-spotify" style="font-size:16px;"></i> NOW STREAMING IN HIGH DEFINITION
+                  </div>
+                  <h4 class="embed-title" style="color:#fff;">Praveen Madhubhashana - Paata As (පාට ඇස්) ft. DILUBeats</h4>
+                  <div class="embed-fields">
+                    <div><strong>Duration:</strong> 5:26</div>
+                    <div><strong>Engine:</strong> Lavalink 64-bit Audio</div>
+                    <div><strong>Quality:</strong> 320kbps Lossless</div>
+                  </div>
+                  <div class="music-live-bar">
+                    <div class="music-equalizer">
+                      <div class="eq-bar"></div>
+                      <div class="eq-bar"></div>
+                      <div class="eq-bar"></div>
+                      <div class="eq-bar"></div>
+                    </div>
+                    <span style="font-size:12px;color:var(--success);font-weight:600;">LIVE AUDIO STREAMING ACTIVE</span>
+                  </div>
+                  <div class="embed-buttons">
+                    <button class="d-btn" style="background:#5865F2;color:#fff;"><i class="fa-solid fa-pause"></i> Pause</button>
+                    <button class="d-btn" style="background:#4f545c;color:#fff;"><i class="fa-solid fa-forward-step"></i> Skip</button>
+                    <button class="d-btn" style="background:var(--stream-red);color:#fff;"><i class="fa-solid fa-stop"></i> Stop</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Preview 1: Stream Alert -->
-          <div id="prev-stream" class="prev-content active">
+          <div id="prev-stream" class="prev-content">
             <div class="discord-msg-card">
               <div class="msg-header">
                 <img class="avatar" src="logo.png" alt="Bot">
