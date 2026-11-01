@@ -6,6 +6,7 @@ const db = require('../modules/database');
 const auth = require('../modules/auth');
 const embeds = require('../modules/embeds');
 const serverArchitect = require('../modules/serverArchitect');
+const aiServerArchitect = require('../modules/aiServerArchitect');
 const logger = require('../utils/logger');
 const config = require('../../config.json');
 
@@ -566,6 +567,38 @@ function createServer(client) {
     }
 
     res.json({ success: true, settings: db.getGuildSettings(guild.id) });
+  });
+
+  // ==========================================
+  // ANDIX AI SERVER ARCHITECT APIS
+  // ==========================================
+  app.get('/api/guild/:guildId/ai-audit', async (req, res) => {
+    const guild = client.guilds.cache.get(req.params.guildId);
+    if (!guild) return res.status(404).json({ error: 'Discord Server not found or bot is not in the server' });
+    try {
+      const aiAnalysis = await aiServerArchitect.analyzeWithAI(guild);
+      res.json(aiAnalysis);
+    } catch (err) {
+      logger.error('AI Audit Error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/guild/:guildId/ai-apply', async (req, res) => {
+    const guild = client.guilds.cache.get(req.params.guildId);
+    if (!guild) return res.status(404).json({ error: 'Discord Server not found' });
+    try {
+      const { selectedItems } = req.body;
+      const results = await aiServerArchitect.applyAIRecommendations(guild, selectedItems);
+      res.json({
+        success: true,
+        message: 'AnDiX AI has safely integrated recommended channels and roles into your community!',
+        results
+      });
+    } catch (err) {
+      logger.error('AI Apply Error:', err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Smart Server Audit Analysis (Check existing vs missing)
