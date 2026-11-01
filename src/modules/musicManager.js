@@ -42,21 +42,27 @@ function initLavalink(client) {
         authorization: 'nazhafreelava',
         host: 'lavalink.nazha.online',
         port: 443,
-        secure: true
+        secure: true,
+        retryAmount: 10,
+        retryDelay: 5000
       },
       {
-        // Backup: jirayu — fast, reliable SoundCloud + YouTube
+        // Backup: Jirayu — fast, reliable SoundCloud + YouTube
         authorization: 'youshallnotpass',
         host: 'lavalink.jirayu.net',
         port: 443,
-        secure: true
+        secure: true,
+        retryAmount: 8,
+        retryDelay: 5000
       },
       {
-        // Backup: Serenetia — LavaSrc Spotify + YouTube
+        // Backup: Serenetia — rate-limited (429), low priority, long retry delay
         authorization: 'https://seretia.link/discord',
         host: 'lavalinkv4.serenetia.com',
         port: 443,
-        secure: true
+        secure: true,
+        retryAmount: 3,
+        retryDelay: 30000
       }
     ],
     sendToShard: (guildId, payload) => {

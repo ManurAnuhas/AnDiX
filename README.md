@@ -1,90 +1,204 @@
-# 🚀 AnDiX - Commercial Gaming & Streamer Discord Bot Suite
+# 🎮 AnDiX — Ultimate Streamer & Gaming Discord Bot Suite
 
-AnDiX යනු Discord Gaming Streamers ලා සහ Server Owners ලා සඳහාම විශේෂයෙන් සකසන ලද Multi-Server Commercial SaaS Bot Platform එකකි.
+<div align="center">
 
----
+[![Discord](https://img.shields.io/badge/Add%20to%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands)
+[![Website](https://img.shields.io/badge/Website-Live-00FFA3?style=for-the-badge&logo=googlechrome&logoColor=white)](https://szdtp6vg4h.apps.bot-hosting.cloud)
+[![Node.js](https://img.shields.io/badge/Node.js-v20-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
+[![License](https://img.shields.io/badge/License-Proprietary-FF0055?style=for-the-badge)](LICENSE)
 
-## ✨ Features (ප්‍රධාන විශේෂාංග)
+**Commercial SaaS Discord Bot Suite built for Sri Lankan Gaming Streamers & Server Owners.**
 
-1. **🌐 Marketing Landing Page & Client Portal**:
-   - අලුත් client කෙනෙකුට website එකෙන් විස්තර බලා account එකක් register කරගත හැක.
-   - Bank transfer slip upload කර payment request එකක් submit කළ හැක.
-2. **🛡️ Master Admin Dashboard**:
-   - `admin@andix.bot` / `admin123` මගින් ඇතුළු විය හැක.
-   - Client ලාගේ Bank Slips check කර Approve / Reject කිරීම.
-   - Monthly Recurring Revenue (MRR), Total Revenue සහ Clients කළමනාකරණය.
-   - ඕනෑම client කෙනෙකුගේ access suspend / reactivate කිරීම.
-3. **🎮 1-Click Server Architect**:
-   - Payment approve වූ පසු client ට තම Server ID එක දී එක click එකෙන් professional server layout එකක් (Roles, Channels, Categories, Permissions) ස්වයංක්‍රීයව හදාගත හැක.
-4. **🔴 Stream Live Alerts & Announcements**:
-   - Twitch, YouTube, Facebook Gaming, Kick stream alerts Web Dashboard එකෙන් කෙලින්ම server එකට යැවීම.
-5. **🛡️ AutoMod & Security**:
-   - Anti-spam, Anti-flood, Anti-invite links, Mass mentions blocker.
-6. **📊 Leveling & Audit Logs**:
-   - User XP & Leveling system, Join/Leave logs, Message delete/edit logs.
+[🌐 Website](https://szdtp6vg4h.apps.bot-hosting.cloud) • [➕ Add Bot](https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands) • [🔑 Client Portal](https://szdtp6vg4h.apps.bot-hosting.cloud/auth.html)
+
+</div>
 
 ---
 
-## 💰 Pricing Model
+## ✨ Features
 
-- **Initial Setup Fee**: LKR 2,000 (One-time)
-- **Monthly Subscription**: LKR 500 / month
+### 🎵 High-Fidelity Music System
+- Powered by **Lavalink v4** (cloud audio engine) — no FFmpeg required
+- Supports **Spotify**, **YouTube**, **SoundCloud**, **Apple Music**, **Deezer**, and 40+ more platforms
+- Commands: `/play`, `/pause`, `/resume`, `/skip`, `/stop`, `/queue`
+- Full-length playback (SoundCloud primary to bypass YouTube's 3-min cloud throttle)
+- Interactive Pause/Resume/Skip buttons on Now Playing embed
+- YouTube playlist support — each track re-resolved via SoundCloud for full playback
+
+### 🏗️ 1-Click Server Architect
+- Build a complete professional gaming server in **under 10 seconds**
+- Creates 7 hierarchical roles (Owner → Muted), 5 categories, 17+ pre-configured channels
+- All permissions pre-tuned for streamer communities
+
+### 📡 Multi-Platform Stream Alerts
+- Broadcast rich live alerts for **YouTube**, **Twitch**, **Facebook Gaming**, **Kick**
+- Send from the Web Dashboard — no bot commands needed
+- Includes Watch button, role mention, and game/title display
+
+### 🛡️ AutoMod & Raid Shield
+- Anti-spam, anti-flood, anti-invite link, mass mention blocker
+- Real-time threat detection and automated timeout
+
+### 📋 Full Audit Logs
+- Message delete/edit tracker
+- Join/Leave logs with avatar
+- Moderation action logs
+
+### 🌐 Client Web Dashboard
+- Each client gets their own login (Email or Discord OAuth)
+- Manage stream alerts, server settings, announcements
+- Submit support tickets, view subscription status
+
+### 🎫 SaaS Admin System
+- Multi-client management from admin panel
+- Payment approval workflow (bank transfer slip upload)
+- Admin can approve/reject and trigger server setup per client
 
 ---
 
-## 🛠️ Local Running (පරිගණකයේ Run කිරීම)
+## 🤖 Slash Commands
 
-1. **Dependencies install කරන්න:**
-   ```bash
-   npm install
-   ```
-
-2. **Slash Commands deploy කරන්න:**
-   ```bash
-   npm run deploy
-   ```
-
-3. **Bot & Web Dashboard Start කරන්න:**
-   ```bash
-   npm start
-   ```
-   - **Public Website / Landing Page**: `http://localhost:3000`
-   - **Login / Register Portal**: `http://localhost:3000/auth.html`
-   - **Client Dashboard**: `http://localhost:3000/client.html`
-   - **Master Admin Dashboard**: `http://localhost:3000/admin.html`
+| Command | Description |
+|---------|-------------|
+| `/play song:<query or URL>` | Play a song from YouTube, Spotify, SoundCloud, etc. |
+| `/pause` | Pause current track |
+| `/resume` | Resume playback |
+| `/skip` | Skip to next track in queue |
+| `/stop` | Stop music and leave voice channel |
+| `/queue` | Show current playback queue |
+| `/clear` | Purge messages from a channel |
+| `/announce` | Send a rich announcement embed |
+| `/buildserver` | 1-Click server architect (admin/owner only) |
+| `/setalert` | Configure stream alert channel |
+| `/ping` | Check bot latency |
 
 ---
 
-## ☁️ 100% Free Hosting Guide (නොමිලේ Host කරන ආකාරය)
+## 🚀 Hosting & Deployment
 
-Discord Bot එකක් දිගටම run වීමට **24/7 Node.js process** එකක් අවශ්‍ය වේ (Vercel Serverless පමණක් ප්‍රමාණවත් නොවේ, මන්ද Discord Gateway WebSockets maintain කළ යුතු බැවිනි). එබැවින් හොඳම ක්‍රමය වන්නේ:
+This bot is hosted on **[Bot-Hosting.net](https://bot-hosting.net)** (Pterodactyl panel, Node.js v20, Linux container).
 
-### 1. Database එක Cloud එකට දැමීම (Free MongoDB Atlas):
-1. [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) වෙත ගොස් නොමිලේ Account එකක් සාදන්න.
-2. **M0 Free Cluster** එකක් සාදන්න.
-3. Database Access එකෙන් Username & Password සාදන්න. Network Access එකෙන් `0.0.0.0/0` (Allow Anywhere) දෙන්න.
-4. Connection string එක (`mongodb+srv://...`) copy කර `.env` file එකේ `MONGODB_URI` එකට paste කරන්න.
+### Requirements
+- Node.js v20+
+- MongoDB (Atlas or self-hosted)
+- Lavalink v4 node (cloud nodes are pre-configured — no self-hosting needed)
 
-### 2. GitHub එකට Code එක Upload කිරීම:
+### Environment Variables
+
+Set these in your hosting panel (never commit to Git):
+
+| Variable | Description |
+|----------|-------------|
+| `DISCORD_TOKEN` | Your Discord bot token |
+| `CLIENT_ID` | Discord application client ID |
+| `CLIENT_SECRET` | Discord OAuth2 client secret |
+| `ADMIN_EMAIL` | Admin dashboard login email |
+| `ADMIN_PASSWORD` | Admin dashboard login password |
+| `JWT_SECRET` | Random secret string for JWT tokens (min 32 chars) |
+| `MONGODB_URI` | MongoDB connection string |
+
+### Local Development
+
 ```bash
-git init
-git add .
-git commit -m "AnDiX SaaS Bot Platform Ready"
-git branch -M main
-git remote add origin https://github.com/<YOUR_USERNAME>/andix-bot.git
-git push -u origin main
-```
-*( `.gitignore` එක මගින් ඔබගේ `.env` සහ `data/` ආරක්ෂිතව ignore කර ඇත )*
+# Clone
+git clone https://github.com/ManurAnuhas/AnDiX.git
+cd AnDiX
 
-### 3. Railway / Render මගින් 24/7 නොමිලේ Host කිරීම:
-1. [Railway.app](https://railway.app) හෝ [Render.com](https://render.com) වෙත ගොස් GitHub account එක connect කරන්න.
-2. සාදන ලද GitHub Repo එක තෝරන්න.
-3. **Environment Variables** (Settings -> Variables) වලට පහත දෑ ඇතුළත් කරන්න:
-   - `DISCORD_TOKEN`
-   - `CLIENT_ID`
-   - `ADMIN_EMAIL` (`admin@andix.bot`)
-   - `ADMIN_PASSWORD` (ඔබ කැමති රහස්‍ය මුරපදයක්)
-   - `JWT_SECRET`
-   - `MONGODB_URI` (MongoDB connection string)
-   - `PORT` (`3000`)
-4. Deploy කරන්න! Railway/Render මගින් ඔබට Public Domain එකක් ලබා දෙන අතර Website එක සහ Bot එක 24/7 Live ක්‍රියාත්මක වේ.
+# Install dependencies
+npm install
+
+# Copy env template
+cp .env.example .env
+# Edit .env with your values
+
+# Start
+npm start
+```
+
+### Discord Developer Portal Setup
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Select your application → **OAuth2** → **Redirects**
+3. Add redirect URL: `https://<your-domain>/api/auth/discord/callback`
+
+---
+
+## 🎵 Music System Architecture
+
+The music system uses **Lavalink v4** with the following node configuration:
+
+| Node | URL | Features |
+|------|-----|----------|
+| **Nazha** (Primary) | `lavalink.nazha.online:443` | Spotify, YouTube, SoundCloud, Apple Music, Deezer, 40+ sources via LavaSrc |
+| **Jirayu** (Backup) | `lavalink.jirayu.net:443` | General audio, reliable fallback |
+| **Serenetia** (Backup) | `lavalinkv4.serenetia.com:443` | Cloud audio node |
+
+**Default search source**: SoundCloud (`scsearch`) — avoids YouTube 3-minute throttle on cloud IPs.
+
+**Spotify playback**: Uses `source: 'spotify'` via LavaSrc plugin on the Nazha node.
+
+---
+
+## 📁 Project Structure
+
+```
+AnDiX/
+├── src/
+│   ├── commands/          # Slash command handlers
+│   ├── modules/
+│   │   ├── musicManager.js    # Lavalink music engine
+│   │   ├── automod.js         # AutoMod & Raid Shield
+│   │   └── auth.js            # JWT authentication
+│   └── dashboard/
+│       ├── server.js          # Express web server + API routes
+│       └── public/
+│           ├── index.html     # Marketing landing page
+│           ├── auth.html      # Login / Register portal
+│           ├── client.html    # Client dashboard
+│           ├── admin.html     # Admin panel
+│           └── styles.css     # Shared styles
+├── api/
+│   └── index.js               # REST API endpoints
+├── config.json                # Bot configuration (no secrets)
+├── package.json
+└── README.md
+```
+
+---
+
+## 🔒 Security Notes
+
+- No secrets are hardcoded in any committed files
+- All credentials are loaded from environment variables
+- `.env` is git-ignored
+- Admin login requires both `ADMIN_EMAIL` and `ADMIN_PASSWORD` env vars
+- JWT tokens expire after 7 days
+
+---
+
+## 📞 Support
+
+- **WhatsApp**: Contact via the website support link
+- **Discord**: Join the community server via the website
+- **Email**: Available on the website
+
+---
+
+## 🏷️ Tech Stack
+
+- **Runtime**: Node.js v20
+- **Discord Library**: discord.js v14
+- **Music Engine**: lavalink-client + Lavalink v4
+- **Web Server**: Express.js
+- **Database**: MongoDB (Mongoose)
+- **Auth**: JWT + Discord OAuth2
+- **Frontend**: Vanilla HTML/CSS/JS (gaming dark theme)
+- **Hosting**: Bot-Hosting.net (Pterodactyl)
+
+---
+
+<div align="center">
+<p>© 2026 <strong>AnDiX Suite</strong> — Built for Sri Lankan Gaming Streamers & Discord Communities</p>
+
+[![Add to Discord](https://img.shields.io/badge/ADD%20BOT%20TO%20SERVER-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands)
+</div>
