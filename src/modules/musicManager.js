@@ -1,7 +1,9 @@
 /**
- * AnDiX High-Performance Enterprise Lavalink Music Engine
- * Uses reliable Lavalink v4 cloud nodes for 100% stable Discord Voice playback.
- * Includes auto-reconnect, fallback retry, and smooth continuous queue management.
+ * AnDiX Enterprise Lavalink Music Engine v3
+ * Primary Node: lavalink.nazha.online (supports Spotify, YouTube, SoundCloud, Apple Music)
+ * - Spotify/YouTube/SC search + stream via cloud engine (no local FFmpeg needed)
+ * - YouTube playlist → SoundCloud re-resolve to avoid 3-min throttling
+ * - Auto trackError recovery and full queue continuity
  */
 
 const { LavalinkManager } = require('lavalink-client');
@@ -9,24 +11,48 @@ const logger = require('../utils/logger');
 
 let lavalink = null;
 
+/**
+ * Detect if query is a URL or plain search term
+ */
+function isUrl(str) {
+  try { new URL(str); return true; } catch { return false; }
+}
+
+/**
+ * Detect YouTube URL
+ */
+function isYouTubeUrl(str) {
+  return /youtu\.be|youtube\.com/i.test(str);
+}
+
+/**
+ * Detect Spotify URL
+ */
+function isSpotifyUrl(str) {
+  return /open\.spotify\.com/i.test(str);
+}
+
 function initLavalink(client) {
   if (lavalink) return lavalink;
 
   lavalink = new LavalinkManager({
     nodes: [
       {
+        // Primary: Nazha — supports Spotify, YouTube, SoundCloud, Apple Music, Deezer
+        authorization: 'nazhafreelava',
+        host: 'lavalink.nazha.online',
+        port: 443,
+        secure: true
+      },
+      {
+        // Backup: jirayu — fast, reliable SoundCloud + YouTube
         authorization: 'youshallnotpass',
         host: 'lavalink.jirayu.net',
         port: 443,
         secure: true
       },
       {
-        authorization: 'youshallnotpass',
-        host: 'nodelink.gdjkhp.com',
-        port: 443,
-        secure: true
-      },
-      {
+        // Backup: Serenetia — LavaSrc Spotify + YouTube
         authorization: 'https://seretia.link/discord',
         host: 'lavalinkv4.serenetia.com',
         port: 443,
@@ -43,6 +69,7 @@ function initLavalink(client) {
     },
     autoSkip: true,
     playerOptions: {
+      // Default to SoundCloud so songs play without YouTube IP throttling
       defaultSearchPlatform: 'scsearch',
       onDisconnect: {
         autoReconnect: true,
@@ -51,42 +78,41 @@ function initLavalink(client) {
     }
   });
 
+  // ─────── Node Events ───────
   lavalink.nodeManager.on('connect', (node) => {
-    logger.success(`🎵 Lavalink Cloud Audio Node Connected: ${node.options.host}`);
+    logger.success(`🎵 Lavalink Node Connected: ${node.options.host}`);
   });
 
-  lavalink.nodeManager.on('disconnect', (node, reason) => {
+  lavalink.nodeManager.on('disconnect', (node) => {
     logger.warn(`Lavalink Node Disconnected: ${node.options.host}`);
   });
 
-  lavalink.nodeManager.on('error', (node, error) => {
-    // Suppress transient node disconnect logs
+  lavalink.nodeManager.on('error', () => {
+    // Suppress transient reconnect warnings
   });
 
-  // Track events
+  // ─────── Track Events ───────
   lavalink.on('trackStart', (player, track) => {
-    logger.success(`🎵 Track started playing: ${track.info.title}`);
+    logger.success(`▶️  Now Playing: ${track.info.title}`);
   });
 
   lavalink.on('trackEnd', (player, track, payload) => {
-    logger.info(`Track ended: ${track?.info?.title} (Reason: ${payload.reason})`);
-    if (payload.reason === 'loadFailed' && player.queue.tracks.length > 0) {
-      player.play();
-    }
+    logger.info(`⏹️  Track ended: ${track?.info?.title} — Reason: ${payload.reason}`);
   });
 
   lavalink.on('trackError', async (player, track, payload) => {
-    logger.warn(`Track playback interrupted (${payload.exception?.message || 'error'}), attempting auto-recovery...`);
+    logger.warn(`⚠️  Track error: ${payload?.exception?.message || payload.reason} — skipping...`);
     if (player.queue.tracks.length > 0) {
-      await player.skip();
+      await player.skip().catch(() => {});
     }
   });
 
-  lavalink.on('trackStuck', async (player, track, payload) => {
-    logger.warn(`Track stuck detected, resuming stream...`);
-    await player.seek(player.position + 1000);
+  lavalink.on('trackStuck', async (player) => {
+    logger.warn(`⚠️  Track stuck — attempting resume...`);
+    await player.seek(player.position + 1500).catch(() => {});
   });
 
+  // Forward raw Discord WebSocket packets to Lavalink for voice UDP handshake
   client.on('raw', (data) => lavalink.sendRawData(data));
 
   return lavalink;
@@ -97,9 +123,7 @@ const musicManager = {
   getManager: () => lavalink,
 
   play: async (voiceChannel, query, interaction, client) => {
-    if (!lavalink) {
-      initLavalink(client);
-    }
+    if (!lavalink) initLavalink(client);
 
     if (!lavalink.initiated) {
       await lavalink.init({ id: client.user.id, username: client.user.username });
@@ -110,7 +134,7 @@ const musicManager = {
 
     if (!player) {
       player = await lavalink.createPlayer({
-        guildId: guildId,
+        guildId,
         voiceChannelId: voiceChannel.id,
         textChannelId: interaction.channelId,
         selfDeaf: false,
@@ -120,24 +144,65 @@ const musicManager = {
       await player.connect();
     }
 
-    // Prioritize SoundCloud stream for uninterrupted playback (bypasses YouTube 3-min throttling)
-    let res = await player.search({
-      query: query.trim(),
-      source: 'scsearch'
-    }, interaction.user);
+    const cleanQuery = query.trim();
+    let res = null;
 
-    if (!res || !res.tracks || res.tracks.length === 0) {
-      res = await player.search({
-        query: query.trim(),
-        source: 'ytsearch'
-      }, interaction.user);
+    // ── Strategy: pick best search source based on query ──
+    if (isSpotifyUrl(cleanQuery)) {
+      // Spotify links: load via LavaSrc plugin (nazha node supports this)
+      res = await player.search({ query: cleanQuery, source: 'spotify' }, interaction.user).catch(() => null);
+
+    } else if (isYouTubeUrl(cleanQuery)) {
+      // YouTube URL: load it directly for the playlist metadata, but then
+      // re-resolve each track via SoundCloud to avoid 3-min throttling
+      const ytRes = await player.search({ query: cleanQuery, source: 'youtube' }, interaction.user).catch(() => null);
+
+      if (ytRes && ytRes.tracks && ytRes.tracks.length > 0) {
+        // For each YT track, search SoundCloud equivalent to prevent stream cuts
+        logger.info(`Re-resolving ${ytRes.tracks.length} YouTube track(s) via SoundCloud...`);
+        const resolvedTracks = [];
+
+        for (const track of ytRes.tracks) {
+          const title = track.info.title
+            .replace(/\(.*?\)|\[.*?\]/g, '')
+            .replace(/official|music|video|lyrics|hd|4k/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const scSearch = await player.search({ query: `scsearch:${title}`, source: 'scsearch' }, interaction.user).catch(() => null);
+          if (scSearch && scSearch.tracks && scSearch.tracks.length > 0) {
+            resolvedTracks.push(scSearch.tracks[0]);
+          } else {
+            // Fallback: keep original YT track
+            resolvedTracks.push(track);
+          }
+        }
+
+        // Build fake result with re-resolved tracks
+        res = {
+          loadType: ytRes.loadType,
+          tracks: resolvedTracks,
+          playlist: ytRes.playlist
+        };
+      } else {
+        // YT URL load failed, try SC search
+        res = await player.search({ query: `scsearch:${cleanQuery}`, source: 'scsearch' }, interaction.user).catch(() => null);
+      }
+
+    } else {
+      // Plain text search: SoundCloud first (uninterrupted), YouTube as fallback
+      res = await player.search({ query: `scsearch:${cleanQuery}`, source: 'scsearch' }, interaction.user).catch(() => null);
+
+      if (!res || !res.tracks || res.tracks.length === 0) {
+        res = await player.search({ query: cleanQuery, source: 'ytsearch' }, interaction.user).catch(() => null);
+      }
     }
 
     if (!res || !res.tracks || res.tracks.length === 0) {
-      throw new Error(`Could not find any song matching "${query}".`);
+      throw new Error(`Could not find any song matching "${cleanQuery}". Try a different search term or paste a SoundCloud / Spotify link.`);
     }
 
-    let songInfo = null;
+    let songInfo;
 
     if (res.loadType === 'playlist') {
       for (const track of res.tracks) {
@@ -145,9 +210,9 @@ const musicManager = {
       }
       songInfo = {
         title: res.playlist?.title || 'Playlist',
-        url: query,
+        url: cleanQuery,
         duration: `${res.tracks.length} Tracks`,
-        thumbnail: res.tracks[0]?.info?.artworkUrl || res.tracks[0]?.info?.uri,
+        thumbnail: res.tracks[0]?.info?.artworkUrl || null,
         requestedBy: interaction.user.tag
       };
       if (!player.playing) await player.play();
@@ -158,39 +223,33 @@ const musicManager = {
     songInfo = {
       title: track.info.title,
       url: track.info.uri,
-      duration: track.info.duration ? formatDuration(track.info.duration) : 'Live / Audio',
-      thumbnail: track.info.artworkUrl,
+      duration: track.info.duration ? formatDuration(track.info.duration) : 'Live',
+      thumbnail: track.info.artworkUrl || null,
       requestedBy: interaction.user.tag
     };
 
     if (player.playing || player.paused) {
       await player.queue.add(track);
       return { status: 'queued', song: songInfo, position: player.queue.tracks.length };
-    } else {
-      await player.queue.add(track);
-      await player.play();
-      return { status: 'playing', song: songInfo };
     }
+
+    await player.queue.add(track);
+    await player.play();
+    return { status: 'playing', song: songInfo };
   },
 
   pause: (guildId) => {
     if (!lavalink) return null;
     const player = lavalink.getPlayer(guildId);
     if (!player) return null;
-
-    if (player.paused) {
-      player.resume();
-      return 'resumed';
-    } else {
-      player.pause();
-      return 'paused';
-    }
+    if (player.paused) { player.resume(); return 'resumed'; }
+    player.pause(); return 'paused';
   },
 
   skip: async (guildId) => {
     if (!lavalink) return false;
     const player = lavalink.getPlayer(guildId);
-    if (!player || (!player.playing && player.queue.tracks.length === 0)) return false;
+    if (!player || (!player.playing && !player.queue.tracks.length)) return false;
     await player.skip();
     return true;
   },
@@ -206,10 +265,8 @@ const musicManager = {
 
 function formatDuration(ms) {
   if (!ms || isNaN(ms)) return 'Live';
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const s = Math.floor(ms / 1000);
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
 module.exports = musicManager;
