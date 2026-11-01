@@ -732,10 +732,15 @@ let linkedServerId = null;
 // On load
 window.addEventListener('DOMContentLoaded', async () => {
   // Hide loader smoothly
-  const loader = document.getElementById('page-loader');
-  if (loader) {
-    setTimeout(() => loader.classList.add('loaded'), 250);
-  }
+  const hideLoader = () => {
+    const loader = document.getElementById('page-loader');
+    if (loader && !loader.classList.contains('loaded')) {
+      loader.classList.add('loaded');
+      setTimeout(() => { loader.style.display = 'none'; }, 500);
+    }
+  };
+  setTimeout(hideLoader, 300);
+  setTimeout(hideLoader, 2000); // Fail-safe fallback
 
   const token = localStorage.getItem('andix_token');
   const cachedUser = localStorage.getItem('andix_user');
@@ -992,8 +997,10 @@ function renderProfile(user) {
   }
 
   // Lock/unlock management
-  document.getElementById('mgmt-locked').style.display = 'none';
-  document.getElementById('mgmt-unlocked').style.display = 'block';
+  const lockedEl = document.getElementById('mgmt-locked');
+  if (lockedEl) lockedEl.style.display = 'none';
+  const unlockedEl = document.getElementById('mgmt-unlocked');
+  if (unlockedEl) unlockedEl.style.display = 'block';
 }
 
 function applyDiscordFeatureGates(isDiscord) {
