@@ -38,22 +38,14 @@ function initLavalink(client) {
   lavalink = new LavalinkManager({
     nodes: [
       {
-        // Primary: Jirayu — extremely fast & stable SSL node
+        // Primary: Jirayu — extremely fast, online & 100% stable SSL node
+        id: 'jirayu-node',
         authorization: 'youshallnotpass',
         host: 'lavalink.jirayu.net',
         port: 443,
         secure: true,
         retryAmount: 10,
-        retryDelay: 5000
-      },
-      {
-        // Secondary: Nazha — supports Spotify, YouTube, SoundCloud
-        authorization: 'nazhafreelava',
-        host: 'lavalink.nazha.online',
-        port: 443,
-        secure: true,
-        retryAmount: 5,
-        retryDelay: 8000
+        retryDelay: 10000
       }
     ],
     sendToShard: (guildId, payload) => {
