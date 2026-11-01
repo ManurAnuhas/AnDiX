@@ -14,8 +14,15 @@
 
   <!-- Cyberpunk Page Loader -->
   <div id="page-loader">
-    <div class="loader-spinner-ring"></div>
-    <div class="loader-text">ANDIX <span>LOADING</span></div>
+    <div class="loader-container">
+      <div class="loader-spinner-ring"></div>
+      <div class="loader-inner-ring"></div>
+      <i class="fa-solid fa-gamepad loader-core-icon"></i>
+    </div>
+    <div class="loader-text">ANDIX <span>STUDIO</span></div>
+    <div class="loader-progress-track">
+      <div class="loader-progress-bar"></div>
+    </div>
   </div>
 
   <!-- Glow Background Spheres -->
@@ -45,11 +52,11 @@
         <a href="#contact"><i class="fa-solid fa-headset"></i> Support</a>
       </nav>
 
-      <div class="nav-actions">
+      <div class="nav-actions" id="nav-actions-container">
         <a href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream btn-sm hover-glow">
           <i class="fa-brands fa-discord"></i> Add to Discord
         </a>
-        <a href="auth.html" class="btn btn-outline-sm hover-glow" title="Client Portal">
+        <a href="auth.html" id="nav-login-btn" class="btn btn-outline-sm hover-glow" title="Client Portal">
           <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
         </a>
       </div>
@@ -397,6 +404,27 @@
       const loader = document.getElementById('page-loader');
       if (loader) {
         setTimeout(() => loader.classList.add('loaded'), 250);
+      }
+
+      // Check if user is logged in
+      const token = localStorage.getItem('andix_token');
+      const userStr = localStorage.getItem('andix_user');
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const loginBtn = document.getElementById('nav-login-btn');
+          if (loginBtn) {
+            const displayName = user.fullName || user.discordTag || 'Account';
+            loginBtn.href = user.role === 'admin' ? 'admin.html' : 'client.html';
+            loginBtn.className = 'btn btn-sm hover-glow';
+            loginBtn.style.cssText = 'background:rgba(88,101,242,0.18);border:1px solid #5865F2;color:#fff;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;';
+            loginBtn.innerHTML = `
+              <i class="fa-brands fa-discord" style="color:#5865F2;"></i>
+              <span>${displayName}</span>
+              <i class="fa-solid fa-arrow-right" style="font-size:11px;opacity:0.7;"></i>
+            `;
+          }
+        } catch (e) {}
       }
     });
 

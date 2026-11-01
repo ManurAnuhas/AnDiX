@@ -237,8 +237,15 @@
 
   <!-- Cyberpunk Page Loader -->
   <div id="page-loader">
-    <div class="loader-spinner-ring"></div>
+    <div class="loader-container">
+      <div class="loader-spinner-ring"></div>
+      <div class="loader-inner-ring"></div>
+      <i class="fa-solid fa-robot loader-core-icon"></i>
+    </div>
     <div class="loader-text">ANDIX <span>DASHBOARD</span></div>
+    <div class="loader-progress-track">
+      <div class="loader-progress-bar"></div>
+    </div>
   </div>
 
   <!-- Navbar -->
@@ -291,55 +298,45 @@
     <div class="section-card" id="server-mgmt-card">
       <div class="section-head">
         <h3><i class="fas fa-cogs"></i> Discord Server Control Center</h3>
-        <span class="badge success" id="linked-server-badge">Free Launch Activated</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select id="server-dropdown-select" onchange="onServerSelectChange(this.value)" style="background:var(--bg-input);border:1px solid var(--border-color);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;outline:none;cursor:pointer;">
+            <option value="">Loading servers...</option>
+          </select>
+          <span class="badge success" id="linked-server-badge">Ready</span>
+        </div>
       </div>
       <div class="section-body" id="server-mgmt-body">
         
-        <!-- Easy 2-Step Server Link Quick Banner -->
-        <div style="background: linear-gradient(135deg, rgba(153,69,255,0.12) 0%, rgba(0,255,163,0.08) 100%); border: 1px solid rgba(153,69,255,0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 16px;">
-          <div>
-            <h4 style="color:#fff; font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
-              <i class="fab fa-discord" style="color:var(--primary);"></i> Step 1: Invite AnDiX to Your Server
-            </h4>
-            <p style="color:var(--text-muted); font-size:13px; margin:0;">
-              Click the button to invite AnDiX to your Discord community. No payment required during Free Launch!
-            </p>
+        <!-- Active Server Banner with Bot Invite Shortcut -->
+        <div style="background: linear-gradient(135deg, rgba(88,101,242,0.14) 0%, rgba(0,255,163,0.08) 100%); border: 1px solid rgba(88,101,242,0.3); border-radius: 12px; padding: 18px 22px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <img id="active-server-icon" src="logo.png" alt="Server Icon" style="width:48px;height:48px;border-radius:50%;border:2px solid var(--primary);object-fit:cover;">
+            <div>
+              <h4 id="active-server-name" style="color:#fff; font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                Loading Server...
+              </h4>
+              <p id="active-server-sub" style="color:var(--text-muted); font-size:13px; margin:0;">
+                Select a server above or add AnDiX to another server to configure.
+              </p>
+            </div>
           </div>
-          <a id="bot-invite-link" href="#" target="_blank" class="btn btn-stream" style="padding:10px 22px; flex-shrink:0;">
-            <i class="fa-solid fa-plus"></i> Invite Bot Now
+          <a id="bot-invite-link" href="https://discord.com/oauth2/authorize?client_id=1565283272072761424&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-stream" style="padding:10px 20px; flex-shrink:0;">
+            <i class="fa-solid fa-plus"></i> Add to Another Server
           </a>
         </div>
 
         <div id="mgmt-unlocked">
           <!-- Tabs -->
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-link')"><i class="fas fa-link"></i> Link Server</button>
-            <button class="tab-btn" onclick="switchTab('tab-setup')"><i class="fas fa-wand-magic-sparkles"></i> 1-Click Auto Setup</button>
+          <div class="tabs" style="flex-wrap:wrap;">
+            <button class="tab-btn active" onclick="switchTab('tab-setup')"><i class="fas fa-wand-magic-sparkles"></i> 1-Click Server Setup</button>
             <button class="tab-btn" onclick="switchTab('tab-stream')"><i class="fas fa-tower-broadcast"></i> Stream Alert</button>
+            <button class="tab-btn" onclick="switchTab('tab-automod')"><i class="fa-solid fa-shield-halved"></i> AutoMod Protection</button>
             <button class="tab-btn" onclick="switchTab('tab-announce')"><i class="fas fa-bullhorn"></i> Announce</button>
-          </div>
-
-          <!-- Tab: Link Server -->
-          <div id="tab-link" class="tab-panel active">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
-              Enter your Discord Server ID to link your server with AnDiX Web Control.
-            </p>
-            <div class="form-row">
-              <div class="form-group" style="margin:0;">
-                <label>Discord Server ID</label>
-                <input type="text" id="server-id-input" placeholder="e.g. 1565285018509778944">
-              </div>
-              <button class="btn btn-primary" onclick="linkServer()">
-                <i class="fas fa-link"></i> Link Server
-              </button>
-            </div>
-            <p style="font-size:12px;color:var(--text-muted);margin-top:10px;">
-              <i class="fas fa-info-circle"></i> <strong>How to get Server ID:</strong> Open Discord → User Settings → Advanced → Turn on <strong>Developer Mode</strong> → Right-click your Server icon → Click <strong>Copy Server ID</strong>.
-            </p>
+            <button class="tab-btn" onclick="switchTab('tab-link')"><i class="fas fa-link"></i> Custom Server ID</button>
           </div>
 
           <!-- Tab: Auto Setup -->
-          <div id="tab-setup" class="tab-panel">
+          <div id="tab-setup" class="tab-panel active">
             <div style="background:rgba(153,69,255,0.08);border:1px solid rgba(153,69,255,0.2);border-radius:10px;padding:20px;margin-bottom:16px;">
               <h4 style="font-family:var(--font-sub);color:var(--primary);margin-bottom:8px;">
                 <i class="fas fa-magic"></i> 1-Click Server Architect
@@ -348,75 +345,133 @@
                 Automatically builds a complete gaming/streaming server with roles, categories, channels, and permissions in one click.
               </p>
               <ul style="font-size:12px;color:var(--text-muted);margin-top:8px;padding-left:16px;line-height:1.8;">
-                <li>7 Roles (Owner, Mod, Streamer, VIP, Subscriber, Member, Muted)</li>
-                <li>5 Categories (Info, Community, Gaming, Streaming, Staff)</li>
-                <li>17+ Channels (rules, announcements, general, stream-alerts, etc.)</li>
+                <li>👑 7 Hierarchical Roles (Owner, Moderator, VIP Squad, Stream Alerts, Gamer, Member, Muted)</li>
+                <li>📁 5 Categories (Information, Community Chats, Gaming Lobbies, Squad VC, Staff Audit)</li>
+                <li>💬 17+ Channels (rules, announcements, stream-alerts, clips, squad-chat, mod-logs)</li>
               </ul>
             </div>
-            <button class="btn btn-primary" style="width:100%;" onclick="autoSetup()">
-              <i class="fas fa-magic"></i> Run 1-Click Server Setup
+            <button class="btn btn-primary btn-block btn-lg" onclick="autoSetup()">
+              <i class="fas fa-magic"></i> RUN 1-CLICK SERVER SETUP NOW
             </button>
-            <p style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;">
-              ⚠️ Make sure the bot has Administrator permission in your server before running.
+            <p style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:center;">
+              ⚠️ Make sure the AnDiX bot role is at the top of the Server Roles hierarchy and has Administrator permission.
             </p>
           </div>
 
           <!-- Tab: Stream Alert -->
           <div id="tab-stream" class="tab-panel">
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
-              Broadcast a stream live alert to your Discord server.
+              Broadcast rich live stream alerts directly to your Discord announcement channel.
             </p>
             <div class="grid-2" style="gap:12px;">
-              <div class="form-group"><label>Stream Title</label><input type="text" id="stream-title" placeholder="Now Streaming!"></div>
-              <div class="form-group"><label>Game</label><input type="text" id="stream-game" placeholder="Minecraft"></div>
+              <div class="form-group"><label>Stream Title *</label><input type="text" id="stream-title" placeholder="E.g. RANK 1 GRIND IN VALORANT!"></div>
+              <div class="form-group"><label>Game Name *</label><input type="text" id="stream-game" placeholder="Valorant, Minecraft, GTA V"></div>
               <div class="form-group"><label>Platform</label>
                 <select id="stream-platform">
                   <option>YouTube</option><option>Twitch</option><option>Facebook Gaming</option><option>Kick</option>
                 </select>
               </div>
-              <div class="form-group"><label>Stream URL</label><input type="text" id="stream-url" placeholder="https://youtube.com/..."></div>
-              <div class="form-group"><label>Thumbnail URL (optional)</label><input type="text" id="stream-thumb" placeholder="https://..."></div>
-              <div class="form-group"><label>Ping Type</label>
+              <div class="form-group"><label>Stream URL *</label><input type="text" id="stream-url" placeholder="https://youtube.com/live/..."></div>
+              <div class="form-group"><label>Thumbnail / Banner Image URL</label><input type="text" id="stream-thumb" placeholder="https://i.ytimg.com/..."></div>
+              <div class="form-group"><label>Ping Target</label>
                 <select id="stream-ping">
                   <option value="everyone">@everyone</option>
                   <option value="here">@here</option>
-                  <option value="role">Subscriber Role</option>
-                  <option value="none">No Ping</option>
+                  <option value="role">Stream Alert Role</option>
+                  <option value="none">No Mention</option>
                 </select>
               </div>
             </div>
-            <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="sendStreamAlert()">
-              <i class="fas fa-broadcast-tower"></i> Send Stream Alert
+            <button class="btn btn-stream btn-block btn-lg" style="margin-top:8px;" onclick="sendStreamAlert()">
+              <i class="fas fa-broadcast-tower"></i> BROADCAST LIVE STREAM ALERT
             </button>
+          </div>
+
+          <!-- Tab: AutoMod Protection -->
+          <div id="tab-automod" class="tab-panel">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+              Configure real-time server defence against raiders, spammers, and unauthorized links.
+            </p>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <strong style="color:#fff;font-size:14px;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-shield-virus" style="color:var(--success);"></i> Anti-Spam & Chat Flood Shield
+                  </strong>
+                  <p style="color:var(--text-muted);font-size:12px;margin:4px 0 0 0;">Automatically deletes rapid message spam and mutes offenders for 5 minutes.</p>
+                </div>
+                <input type="checkbox" id="automod-antispam" checked style="width:20px;height:20px;accent-color:#00FFA3;">
+              </div>
+
+              <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <strong style="color:#fff;font-size:14px;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-link-slash" style="color:var(--stream-red);"></i> Anti-Invite Links & Phishing Guard
+                  </strong>
+                  <p style="color:var(--text-muted);font-size:12px;margin:4px 0 0 0;">Blocks unauthorized Discord invite links and suspicious URL redirects.</p>
+                </div>
+                <input type="checkbox" id="automod-antilink" checked style="width:20px;height:20px;accent-color:#00FFA3;">
+              </div>
+
+              <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <strong style="color:#fff;font-size:14px;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-bell-slash" style="color:var(--warning);"></i> Mass Mention Blocker
+                  </strong>
+                  <p style="color:var(--text-muted);font-size:12px;margin:4px 0 0 0;">Prevents rogue members from spamming @everyone or @here mentions.</p>
+                </div>
+                <input type="checkbox" id="automod-massmention" checked style="width:20px;height:20px;accent-color:#00FFA3;">
+              </div>
+
+              <button class="btn btn-primary btn-block" onclick="saveAutoModSettings()" style="margin-top:8px;">
+                <i class="fa-solid fa-check"></i> Save AutoMod Protection Rules
+              </button>
+            </div>
           </div>
 
           <!-- Tab: Announce -->
           <div id="tab-announce" class="tab-panel">
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
-              Send a custom announcement to your server.
+              Send a custom announcement embed to your community text channels.
             </p>
-            <div class="form-group"><label>Title</label><input type="text" id="ann-title" placeholder="Announcement Title"></div>
-            <div class="form-group"><label>Message</label><textarea id="ann-msg" rows="4" placeholder="Your message here..."></textarea></div>
+            <div class="form-group"><label>Announcement Title *</label><input type="text" id="ann-title" placeholder="Special Server Announcement"></div>
+            <div class="form-group"><label>Message Content *</label><textarea id="ann-msg" rows="4" placeholder="Enter message text here..."></textarea></div>
             <div class="grid-2" style="gap:12px;">
-              <div class="form-group"><label>Color</label>
+              <div class="form-group"><label>Embed Theme Color</label>
                 <select id="ann-color">
-                  <option value="purple">Purple</option>
-                  <option value="red">Red</option>
-                  <option value="green">Green</option>
-                  <option value="blue">Blue</option>
+                  <option value="purple">Neon Purple</option>
+                  <option value="red">Streamer Red</option>
+                  <option value="green">Gamer Green</option>
+                  <option value="blue">Cyan Blue</option>
                 </select>
               </div>
-              <div class="form-group"><label>Ping</label>
+              <div class="form-group"><label>Notification Mention</label>
                 <select id="ann-ping">
-                  <option value="none">No Ping</option>
+                  <option value="none">No Mention</option>
                   <option value="everyone">@everyone</option>
                   <option value="here">@here</option>
                 </select>
               </div>
             </div>
-            <button class="btn btn-primary" style="width:100%;" onclick="sendAnnouncement()">
-              <i class="fas fa-bullhorn"></i> Send Announcement
+            <button class="btn btn-primary btn-block btn-lg" onclick="sendAnnouncement()">
+              <i class="fas fa-bullhorn"></i> PUBLISH ANNOUNCEMENT
             </button>
+          </div>
+
+          <!-- Tab: Custom Server Link -->
+          <div id="tab-link" class="tab-panel">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+              Want to manually link by Discord Server ID? Enter the ID below.
+            </p>
+            <div class="form-row">
+              <div class="form-group" style="margin:0;">
+                <label>Discord Server ID</label>
+                <input type="text" id="server-id-input" placeholder="e.g. 1565285018509778944">
+              </div>
+              <button class="btn btn-primary" onclick="linkServer()">
+                <i class="fas fa-link"></i> Link ID
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -454,12 +509,112 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   if (token) {
     await loadProfile(token);
+    await loadServers();
   } else {
     // If no token, redirect to auth
     window.location.href = 'auth.html';
   }
   await loadBankDetails();
 });
+
+let cachedGuilds = [];
+
+async function loadServers() {
+  try {
+    const res = await fetch(`${API}/api/status`);
+    const data = await res.json();
+    cachedGuilds = data.guilds || [];
+
+    const select = document.getElementById('server-dropdown-select');
+    if (!select) return;
+
+    if (!cachedGuilds.length) {
+      select.innerHTML = '<option value="">No servers found</option>';
+      document.getElementById('active-server-name').textContent = 'No Servers Available';
+      document.getElementById('active-server-sub').textContent = 'Click "Add to Another Server" to invite AnDiX bot to your community.';
+      return;
+    }
+
+    select.innerHTML = cachedGuilds.map(g => `
+      <option value="${g.id}" ${g.id === linkedServerId ? 'selected' : ''}>
+        ${g.name} (${g.memberCount} members)
+      </option>
+    `).join('');
+
+    // If no server linked yet, auto-select the first server
+    if (!linkedServerId && cachedGuilds.length > 0) {
+      linkedServerId = cachedGuilds[0].id;
+    }
+
+    updateActiveServerDisplay(linkedServerId);
+  } catch (e) {
+    console.error('Failed to load servers:', e);
+  }
+}
+
+function updateActiveServerDisplay(guildId) {
+  const guild = cachedGuilds.find(g => g.id === guildId);
+  if (guild) {
+    document.getElementById('active-server-name').innerHTML = `
+      <i class="fa-brands fa-discord" style="color:var(--primary);"></i>
+      ${guild.name}
+    `;
+    document.getElementById('active-server-sub').textContent = `Server ID: ${guild.id} • ${guild.memberCount} Active Members • Fully Managed by AnDiX`;
+    if (guild.icon) {
+      document.getElementById('active-server-icon').src = guild.icon;
+    }
+    document.getElementById('stat-server').textContent = guild.name;
+    document.getElementById('linked-server-badge').textContent = `Active: ${guild.name}`;
+    const idInput = document.getElementById('server-id-input');
+    if (idInput) idInput.value = guild.id;
+  }
+}
+
+async function onServerSelectChange(guildId) {
+  if (!guildId) return;
+  linkedServerId = guildId;
+  updateActiveServerDisplay(guildId);
+  
+  // Link to account on backend
+  const token = localStorage.getItem('andix_token');
+  if (token) {
+    try {
+      await fetch(`${API}/api/client/link-server`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ serverId: guildId })
+      });
+      showToast('Switched active server!', 'success');
+    } catch (e) {}
+  }
+}
+
+async function saveAutoModSettings() {
+  const token = localStorage.getItem('andix_token');
+  if (!linkedServerId) return showToast('Please select a server first', 'error');
+
+  const antispam = document.getElementById('automod-antispam').checked;
+  const antilink = document.getElementById('automod-antilink').checked;
+  const massmention = document.getElementById('automod-massmention').checked;
+
+  try {
+    const res = await fetch(`${API}/api/guild/${linkedServerId}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        automodEnabled: antispam || antilink || massmention
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('AutoMod Protection Rules Saved!', 'success');
+    } else {
+      showToast('Failed to save settings', 'error');
+    }
+  } catch(e) {
+    showToast('Error saving AutoMod settings', 'error');
+  }
+}
 
 async function loadProfile(token) {
   try {
