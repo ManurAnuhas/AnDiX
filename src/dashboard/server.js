@@ -208,6 +208,36 @@ function createServer(client) {
       });
       const discordUser = await userRes.json();
 
+      // Fetch user's actual Discord guilds with permissions
+      let userAdminGuilds = [];
+      try {
+        const guildsRes = await fetch('https://discord.com/api/users/@me/guilds', {
+          headers: { Authorization: `Bearer ${tokenData.access_token}` }
+        });
+        const allUserGuilds = await guildsRes.json();
+        if (Array.isArray(allUserGuilds)) {
+          // Filter where user is Owner OR has Admin/ManageGuild permissions
+          userAdminGuilds = allUserGuilds.filter(g => {
+            if (g.owner) return true;
+            try {
+              const perms = BigInt(g.permissions || 0);
+              // 0x8n = Administrator, 0x20n = Manage Guild, 0x4n = Ban, 0x2n = Kick
+              return (perms & 0x8n) !== 0n || (perms & 0x20n) !== 0n || (perms & 0x4n) !== 0n || (perms & 0x2n) !== 0n;
+            } catch (e) {
+              return false;
+            }
+          }).map(g => ({
+            id: g.id,
+            name: g.name,
+            icon: g.icon,
+            isOwner: !!g.owner,
+            permissions: g.permissions
+          }));
+        }
+      } catch (err) {
+        logger.error('Failed to fetch user guilds from Discord OAuth:', err);
+      }
+
       const email = discordUser.email || `${discordUser.id}@discord.user`;
       let user = db.findUserByEmail(email);
 
@@ -224,6 +254,7 @@ function createServer(client) {
           discordTag: discordTag,
           discordId: discordUser.id,
           avatar: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null,
+          adminGuilds: userAdminGuilds,
           isDiscordAuth: true,
           role: 'client',
           subscription: {
@@ -240,6 +271,7 @@ function createServer(client) {
         user.isDiscordAuth = true;
         user.discordTag = discordTag;
         user.discordId = discordUser.id;
+        user.adminGuilds = userAdminGuilds;
         if (discordUser.avatar) {
           user.avatar = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
         }
@@ -344,6 +376,7 @@ function createServer(client) {
   app.get('/api/client/managed-servers', auth.requireAuth, async (req, res) => {
     const user = db.findUserById(req.user.id);
     const userDiscordId = user?.discordId || req.user.discordId;
+    const adminGuilds = user?.adminGuilds || [];
 
     const managedGuilds = [];
 
@@ -351,14 +384,28 @@ function createServer(client) {
       let isAllowed = false;
       let userRoleTitle = 'Member';
 
-      // 1. Is user the Server Owner?
+      // 1. Check if user is the Server Owner directly on discord.js guild
       if (userDiscordId && guild.ownerId === userDiscordId) {
         isAllowed = true;
         userRoleTitle = '👑 Server Owner';
-      } else if (userDiscordId) {
-        // 2. Fetch member to check Admin / Mod permissions
+      }
+
+      // 2. Check if this server is inside user's OAuth adminGuilds list
+      if (!isAllowed && adminGuilds.length > 0) {
+        const foundInOAuth = adminGuilds.find(ag => ag.id === guild.id);
+        if (foundInOAuth) {
+          isAllowed = true;
+          userRoleTitle = foundInOAuth.isOwner ? '👑 Server Owner' : '🛡️ Administrator / Mod';
+        }
+      }
+
+      // 3. Fallback: Check guild member in cache or fetch
+      if (!isAllowed && userDiscordId) {
         try {
-          const member = await guild.members.fetch(userDiscordId).catch(() => null);
+          let member = guild.members.cache.get(userDiscordId);
+          if (!member) {
+            member = await guild.members.fetch(userDiscordId).catch(() => null);
+          }
           if (member) {
             if (member.permissions.has(PermissionFlagsBits.Administrator)) {
               isAllowed = true;
@@ -375,7 +422,7 @@ function createServer(client) {
         } catch (e) {}
       }
 
-      // If user has manually linked this specific server, also allow it
+      // 4. Fallback: If user manually linked this server, allow it
       if (!isAllowed && user?.discordServerId === guild.id) {
         isAllowed = true;
         userRoleTitle = 'Linked Community';

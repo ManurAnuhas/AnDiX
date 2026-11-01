@@ -371,9 +371,11 @@
           </div>
 
           <!-- AI Server Architect Modal -->
-          <div id="smart-setup-modal" style="position:fixed;inset:0;background:rgba(5,6,10,0.88);backdrop-filter:blur(14px);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;">
-            <div class="card" style="max-width:620px;width:100%;border-radius:18px;border:1px solid rgba(153,69,255,0.45);padding:30px;box-shadow:0 25px 70px rgba(0,0,0,0.9);max-height:90vh;overflow-y:auto;position:relative;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border-bottom:1px solid var(--border-color);padding-bottom:14px;">
+          <div id="smart-setup-modal" style="position:fixed;inset:0;background:rgba(5,6,10,0.88);backdrop-filter:blur(14px);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px;">
+            <div class="card" style="max-width:620px;width:100%;border-radius:18px;border:1px solid rgba(153,69,255,0.45);padding:24px 28px;box-shadow:0 25px 70px rgba(0,0,0,0.9);max-height:88vh;display:flex;flex-direction:column;position:relative;">
+              
+              <!-- Sticky Modal Header -->
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border-color);padding-bottom:12px;flex-shrink:0;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;background:rgba(153,69,255,0.2);border:1px solid var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;">
                     <i class="fa-solid fa-brain" style="color:var(--primary);font-size:18px;"></i>
@@ -387,52 +389,53 @@
               </div>
 
               <!-- AI Loading State -->
-              <div id="audit-loading-state" style="text-align:center;padding:40px 0;">
+              <div id="audit-loading-state" style="text-align:center;padding:40px 0;flex:1;">
                 <div class="loader-spinner-ring" style="margin:0 auto 18px;width:50px;height:50px;"></div>
                 <h4 style="color:#fff;font-family:var(--font-heading);font-size:15px;margin-bottom:6px;">AnDiX AI is analyzing your server...</h4>
                 <p style="color:var(--text-muted);font-size:13px;margin:0;">Auditing channel structures, role hierarchy, and community engagement features.</p>
               </div>
 
-              <!-- AI Results State -->
-              <div id="audit-results-state" style="display:none;">
+              <!-- AI Results Scrollable Content Body -->
+              <div id="audit-results-state" style="display:none;flex:1;overflow-y:auto;padding-right:4px;">
                 <!-- AI Score Card -->
-                <div style="background:rgba(15,17,28,0.9);border:1px solid var(--border-color);border-radius:12px;padding:18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+                <div style="background:rgba(15,17,28,0.9);border:1px solid var(--border-color);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                   <div>
                     <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Community Health Rating</div>
-                    <div id="ai-grade-text" style="font-family:var(--font-heading);font-size:18px;color:#00FFA3;font-weight:700;">Good Foundation</div>
-                    <p id="ai-existing-summary" style="font-size:12px;color:var(--text-muted);margin:4px 0 0 0;">Existing 18 channels & 7 roles are safely protected.</p>
+                    <div id="ai-grade-text" style="font-family:var(--font-heading);font-size:17px;color:#00FFA3;font-weight:700;">Good Foundation</div>
+                    <p id="ai-existing-summary" style="font-size:12px;color:var(--text-muted);margin:4px 0 0 0;">Existing channels & roles are safely protected.</p>
                   </div>
                   <div style="text-align:right;">
                     <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">AI Score</div>
-                    <div id="ai-score-number" style="font-family:var(--font-heading);font-size:32px;color:#fff;font-weight:900;">75<span style="font-size:16px;color:var(--text-muted);">/100</span></div>
+                    <div id="ai-score-number" style="font-family:var(--font-heading);font-size:30px;color:#fff;font-weight:900;">75<span style="font-size:15px;color:var(--text-muted);">/100</span></div>
                   </div>
                 </div>
 
                 <!-- AI Recommendations Insights -->
-                <div style="margin-bottom:18px;">
-                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                <div style="margin-bottom:14px;">
+                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
                     <i class="fa-solid fa-lightbulb" style="color:#FFB800;"></i> AI Strategic Insights:
                   </strong>
-                  <div id="ai-insights-list" style="background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.25);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text-main);line-height:1.7;">
+                  <div id="ai-insights-list" style="background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.25);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text-main);line-height:1.6;">
                     <!-- Injected via JS -->
                   </div>
                 </div>
 
                 <!-- Actionable Checklist of Missing Additions -->
-                <div style="margin-bottom:20px;">
-                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                <div style="margin-bottom:14px;">
+                  <strong style="color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
                     <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Recommended Safe Additions (Missing):
                   </strong>
-                  <div id="audit-missing-list" style="max-height:190px;overflow-y:auto;background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:12px;font-size:13px;">
+                  <div id="audit-missing-list" style="max-height:160px;overflow-y:auto;background:var(--bg-input);border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;font-size:12px;">
                     <!-- Injected via JS -->
                   </div>
                 </div>
 
-                <div style="display:flex;gap:12px;">
-                  <button class="btn btn-stream btn-block btn-lg" onclick="applySafeSetup()" id="btn-apply-safe">
+                <!-- Always-Visible Action Footer -->
+                <div style="position:sticky;bottom:0;background:#0d0f1a;padding-top:14px;border-top:1px solid var(--border-color);display:flex;gap:12px;z-index:20;">
+                  <button class="btn btn-stream btn-block btn-lg" onclick="applySafeSetup()" id="btn-apply-safe" style="padding:14px;font-size:13px;letter-spacing:0.5px;">
                     <i class="fa-solid fa-sparkles"></i> APPLY AI UPGRADES (SAFE 1-CLICK)
                   </button>
-                  <button class="btn btn-outline-sm" onclick="closeSmartSetupModal()" style="padding:12px 20px;">
+                  <button class="btn btn-outline-sm" onclick="closeSmartSetupModal()" style="padding:12px 18px;white-space:nowrap;">
                     Close
                   </button>
                 </div>
