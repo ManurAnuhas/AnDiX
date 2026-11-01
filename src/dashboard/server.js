@@ -779,16 +779,32 @@ function createServer(client) {
     const guild = client.guilds.cache.get(req.params.guildId);
     if (!guild) return res.status(404).json({ error: 'Server not found' });
 
-    const { title, game, platform, url, imageUrl, pingType } = req.body;
+    const { title, game, platform, url } = req.body;
+    const imageUrl = req.body.imageUrl || req.body.thumbnail;
+    const pingType = req.body.pingType || req.body.ping;
+
     if (!title || !url || !platform) {
       return res.status(400).json({ error: 'Title, Platform, and Stream URL are required' });
     }
 
     const settings = db.getGuildSettings(guild.id);
-    const targetChannelId = settings.streamChannel;
+    let targetChannelId = settings.streamChannel;
+
+    // Smart fallback: search for live/stream/announcements channel if not set
+    if (!targetChannelId) {
+      const fallbackCh = guild.channels.cache.find(c => 
+        c.isTextBased() && (c.name.includes('live') || c.name.includes('stream') || c.name.includes('announce'))
+      );
+      if (fallbackCh) targetChannelId = fallbackCh.id;
+    }
 
     if (!targetChannelId) {
-      return res.status(400).json({ error: 'Please set the Stream Alerts Channel in Settings first!' });
+      const generalCh = guild.channels.cache.find(c => c.isTextBased() && (c.name.includes('general') || c.name.includes('chat')));
+      if (generalCh) targetChannelId = generalCh.id;
+    }
+
+    if (!targetChannelId) {
+      return res.status(400).json({ error: 'No text channel found to send Stream Alert. Please create a #live-alerts channel.' });
     }
 
     const channel = guild.channels.cache.get(targetChannelId);
@@ -836,9 +852,28 @@ function createServer(client) {
     const guild = client.guilds.cache.get(req.params.guildId);
     if (!guild) return res.status(404).json({ error: 'Server not found' });
 
-    const { channelId, title, message, color, pingType, imageUrl } = req.body;
-    if (!channelId || !title || !message) {
-      return res.status(400).json({ error: 'Channel, Title, and Message are required' });
+    const title = req.body.title;
+    const message = req.body.message;
+    const color = req.body.color;
+    const pingType = req.body.pingType || req.body.ping;
+    const imageUrl = req.body.imageUrl;
+    let channelId = req.body.channelId;
+
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and Message are required' });
+    }
+
+    // Auto-detect announcement channel if not specified
+    if (!channelId) {
+      const settings = db.getGuildSettings(guild.id);
+      channelId = settings.announceChannel || settings.streamChannel;
+    }
+    if (!channelId) {
+      const announceCh = guild.channels.cache.find(c => c.isTextBased() && (c.name.includes('announce') || c.name.includes('news') || c.name.includes('general')));
+      if (announceCh) channelId = announceCh.id;
+    }
+    if (!channelId) {
+      return res.status(400).json({ error: 'No suitable text channel found for announcement.' });
     }
 
     const channel = guild.channels.cache.get(channelId);
