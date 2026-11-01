@@ -38,31 +38,22 @@ function initLavalink(client) {
   lavalink = new LavalinkManager({
     nodes: [
       {
-        // Primary: Nazha — supports Spotify, YouTube, SoundCloud, Apple Music, Deezer
-        authorization: 'nazhafreelava',
-        host: 'lavalink.nazha.online',
+        // Primary: Jirayu — extremely fast & stable SSL node
+        authorization: 'youshallnotpass',
+        host: 'lavalink.jirayu.net',
         port: 443,
         secure: true,
         retryAmount: 10,
         retryDelay: 5000
       },
       {
-        // Backup: Jirayu — fast, reliable SoundCloud + YouTube
-        authorization: 'youshallnotpass',
-        host: 'lavalink.jirayu.net',
+        // Secondary: Nazha — supports Spotify, YouTube, SoundCloud
+        authorization: 'nazhafreelava',
+        host: 'lavalink.nazha.online',
         port: 443,
         secure: true,
-        retryAmount: 8,
-        retryDelay: 5000
-      },
-      {
-        // Backup: Serenetia — rate-limited (429), low priority, long retry delay
-        authorization: 'https://seretia.link/discord',
-        host: 'lavalinkv4.serenetia.com',
-        port: 443,
-        secure: true,
-        retryAmount: 3,
-        retryDelay: 30000
+        retryAmount: 5,
+        retryDelay: 8000
       }
     ],
     sendToShard: (guildId, payload) => {
