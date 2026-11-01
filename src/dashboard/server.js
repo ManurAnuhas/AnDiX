@@ -21,14 +21,27 @@ function createServer(client) {
   // 1. PUBLIC SAAS INFORMATION & AUTH
   // ==========================================
 
-  // Public SaaS info (Pricing & Bank Details)
+  // Public SaaS info & Live Dynamic Bot Features Sync
   app.get('/api/public/info', (req, res) => {
+    // Dynamic command list extraction from Discord Client
+    const activeCommands = client.commands ? Array.from(client.commands.values()).map(cmd => ({
+      name: cmd.data?.name || cmd.name,
+      description: cmd.data?.description || cmd.description,
+      category: cmd.category || 'General'
+    })) : [];
+
     res.json({
       productName: config.saas?.productName || 'AnDiX Pro Discord Suite',
       pricing: config.saas?.pricing || { setupFeeLkr: 2000, monthlyFeeLkr: 500 },
       bankDetails: config.saas?.bankDetails || {},
       contact: config.saas?.contact || {},
-      botInviteUrl: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || '1565283272072761424'}&permissions=8&integration_type=0&scope=bot+applications.commands`
+      botInviteUrl: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID || '1565283272072761424'}&permissions=8&integration_type=0&scope=bot+applications.commands`,
+      dynamicFeatures: {
+        commandsCount: activeCommands.length,
+        commands: activeCommands,
+        supportedMusicSources: ['Spotify', 'YouTube', 'SoundCloud', 'Apple Music', 'Deezer'],
+        securityModules: ['Anti-Spam & Flood', 'Anti-Invite Raid Protection', 'Mass Mention Shield', 'Live Audit Logs']
+      }
     });
   });
 
@@ -553,6 +566,35 @@ function createServer(client) {
     }
 
     res.json({ success: true, settings: db.getGuildSettings(guild.id) });
+  });
+
+  // Smart Server Audit Analysis (Check existing vs missing)
+  app.get('/api/guild/:guildId/audit-analysis', async (req, res) => {
+    const guild = client.guilds.cache.get(req.params.guildId);
+    if (!guild) return res.status(404).json({ error: 'Server not found' });
+    try {
+      const analysis = await serverArchitect.analyzeServer(guild);
+      res.json(analysis);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Non-Destructive Setup: Build ONLY missing channels/roles (leaves existing intact!)
+  app.post('/api/guild/:guildId/build-missing-only', async (req, res) => {
+    const guild = client.guilds.cache.get(req.params.guildId);
+    if (!guild) return res.status(404).json({ error: 'Server not found' });
+    try {
+      const summary = await serverArchitect.buildMissingOnly(guild);
+      return res.json({
+        success: true,
+        message: 'Safe setup completed! Created only missing items without altering existing channels or roles.',
+        summary
+      });
+    } catch (err) {
+      logger.error('Safe build failed from dashboard:', err);
+      return res.status(500).json({ error: err.message });
+    }
   });
 
   // 1-Click Complete Server Setup

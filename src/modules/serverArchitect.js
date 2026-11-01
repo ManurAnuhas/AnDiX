@@ -248,6 +248,122 @@ const serverArchitect = {
       db.updateGuildSettings(guild.id, 'streamPingRole', roleMap['🔔 Stream Notifications'].id);
     }
 
+    return result;
+  },
+
+  // ==========================================================
+  // SMART SERVER AUDIT & NON-DESTRUCTIVE MISSING CHECK
+  // ==========================================================
+  analyzeServer: async (guild) => {
+    const standardRoles = [
+      'Server Owner', 'Admin', 'Moderator', 'VIP Squad', 'Stream Notifications', 'Gamer', 'Muted'
+    ];
+
+    const standardChannels = [
+      { name: 'welcome', category: 'INFORMATION', type: 'text' },
+      { name: 'rules', category: 'INFORMATION', type: 'text' },
+      { name: 'announcements', category: 'INFORMATION', type: 'text' },
+      { name: 'live-alerts', category: 'INFORMATION', type: 'text' },
+      { name: 'general-chat', category: 'COMMUNITY', type: 'text' },
+      { name: 'clips-and-highlights', category: 'COMMUNITY', type: 'text' },
+      { name: 'looking-for-group', category: 'GAMING SQUAD', type: 'text' },
+      { name: 'mod-logs', category: 'STAFF & AUDIT', type: 'text' },
+      { name: 'Join to Create Squad VC', category: 'VOICE ROOMS', type: 'voice' }
+    ];
+
+    const existingRoleNames = guild.roles.cache.map(r => r.name.toLowerCase());
+    const existingChannelNames = guild.channels.cache.map(c => c.name.toLowerCase());
+
+    const missingRoles = standardRoles.filter(roleName => {
+      const simplified = roleName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return !existingRoleNames.some(er => er.replace(/[^a-z0-9]/g, '').includes(simplified));
+    });
+
+    const missingChannels = standardChannels.filter(ch => {
+      const simplified = ch.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return !existingChannelNames.some(ec => ec.replace(/[^a-z0-9]/g, '').includes(simplified));
+    });
+
+    const isAlreadySetup = missingChannels.length === 0 && missingRoles.length === 0;
+
+    return {
+      serverName: guild.name,
+      serverId: guild.id,
+      totalExistingChannels: guild.channels.cache.size,
+      totalExistingRoles: guild.roles.cache.size,
+      missingRoles,
+      missingChannels,
+      isAlreadySetup,
+      hasEnoughPermissions: guild.members.me?.permissions.has(PermissionFlagsBits.Administrator)
+    };
+  },
+
+  // Safely create ONLY the missing channels and roles (Leaves all existing items intact!)
+  buildMissingOnly: async (guild) => {
+    logger.info(`Starting Safe Missing-Only Architecture for: ${guild.name} (${guild.id})`);
+    const analysis = await serverArchitect.analyzeServer(guild);
+    const result = {
+      rolesCreated: [],
+      categoriesCreated: [],
+      channelsCreated: [],
+      errors: []
+    };
+
+    if (analysis.isAlreadySetup) {
+      return {
+        success: true,
+        message: 'Your server already has all recommended streamer channels and roles! Nothing was altered.',
+        result
+      };
+    }
+
+    // Role creation if missing
+    for (const rName of analysis.missingRoles) {
+      try {
+        const created = await guild.roles.create({
+          name: `🎮 ${rName}`,
+          color: rName.includes('Admin') ? '#E74C3C' : rName.includes('Mod') ? '#1ABC9C' : '#9945FF',
+          reason: 'AnDiX Safe Recommended Setup'
+        });
+        result.rolesCreated.push(created.name);
+      } catch (err) {
+        result.errors.push(`Role ${rName}: ${err.message}`);
+      }
+    }
+
+    // Missing channels creation inside an "AnDiX Recommended" Category
+    if (analysis.missingChannels.length > 0) {
+      try {
+        let targetCategory = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name.includes('ANDIX ADDITIONS'));
+        if (!targetCategory) {
+          targetCategory = await guild.channels.create({
+            name: '✨ ─── ANDIX SQUAD ───',
+            type: ChannelType.GuildCategory,
+            reason: 'AnDiX Safe Setup'
+          });
+          result.categoriesCreated.push(targetCategory.name);
+        }
+
+        for (const ch of analysis.missingChannels) {
+          const isVoice = ch.type === 'voice';
+          const created = await guild.channels.create({
+            name: `${isVoice ? '🔊' : '💬'}・${ch.name}`,
+            type: isVoice ? ChannelType.GuildVoice : ChannelType.GuildText,
+            parent: targetCategory.id,
+            reason: 'AnDiX Recommended Setup'
+          });
+          result.channelsCreated.push(created.name);
+          if (ch.name.includes('live-alerts')) db.updateGuildSettings(guild.id, 'streamChannel', created.id);
+          if (ch.name.includes('mod-logs')) db.updateGuildSettings(guild.id, 'modLogChannel', created.id);
+        }
+      } catch (err) {
+        result.errors.push(`Channels error: ${err.message}`);
+      }
+    }
+
+    return result;
+  }
+
     logger.success(`1-Click Server Setup completed for ${guild.name}!`);
     return result;
   }

@@ -335,27 +335,81 @@
             <button class="tab-btn" onclick="switchTab('tab-link')"><i class="fas fa-link"></i> Custom Server ID</button>
           </div>
 
-          <!-- Tab: Auto Setup -->
+          <!-- Tab: Auto Setup (Smart & Non-Destructive) -->
           <div id="tab-setup" class="tab-panel active">
-            <div style="background:rgba(153,69,255,0.08);border:1px solid rgba(153,69,255,0.2);border-radius:10px;padding:20px;margin-bottom:16px;">
-              <h4 style="font-family:var(--font-sub);color:var(--primary);margin-bottom:8px;">
-                <i class="fas fa-magic"></i> 1-Click Server Architect
-              </h4>
-              <p style="font-size:13px;color:var(--text-muted);">
-                Automatically builds a complete gaming/streaming server with roles, categories, channels, and permissions in one click.
+            <div style="background:rgba(153,69,255,0.08);border:1px solid rgba(153,69,255,0.25);border-radius:12px;padding:22px;margin-bottom:18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <h4 style="font-family:var(--font-sub);color:var(--primary);margin:0;font-size:17px;display:flex;align-items:center;gap:8px;">
+                  <i class="fas fa-magic"></i> Smart Server Architect & Safe Setup
+                </h4>
+                <span class="badge" style="background:rgba(0,255,163,0.15);border:1px solid #00FFA3;color:#00FFA3;font-size:11px;">100% NON-DESTRUCTIVE</span>
+              </div>
+              <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0 0 12px 0;">
+                Already have channels or roles? Don't worry! AnDiX scans your server first, protects all existing setups, and only recommends and adds missing streamer channels/roles.
               </p>
-              <ul style="font-size:12px;color:var(--text-muted);margin-top:8px;padding-left:16px;line-height:1.8;">
-                <li>👑 7 Hierarchical Roles (Owner, Moderator, VIP Squad, Stream Alerts, Gamer, Member, Muted)</li>
-                <li>📁 5 Categories (Information, Community Chats, Gaming Lobbies, Squad VC, Staff Audit)</li>
-                <li>💬 17+ Channels (rules, announcements, stream-alerts, clips, squad-chat, mod-logs)</li>
-              </ul>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;">
+                <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--text-main);">
+                  <i class="fa-solid fa-shield-halved" style="color:#00FFA3;margin-right:6px;"></i> Existing channels never deleted
+                </div>
+                <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--text-main);">
+                  <i class="fa-solid fa-wand-magic-sparkles" style="color:#9945FF;margin-right:6px;"></i> Smart Gap & Role Detection
+                </div>
+                <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--text-main);">
+                  <i class="fa-solid fa-eye" style="color:#00C8FF;margin-right:6px;"></i> Review recommendations first
+                </div>
+              </div>
             </div>
-            <button class="btn btn-primary btn-block btn-lg" onclick="autoSetup()">
-              <i class="fas fa-magic"></i> RUN 1-CLICK SERVER SETUP NOW
+
+            <button class="btn btn-primary btn-block btn-lg pulse-button" onclick="openSmartSetupModal()">
+              <i class="fas fa-wand-magic-sparkles"></i> AUDIT SERVER & VIEW RECOMMENDATIONS
             </button>
             <p style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:center;">
-              ⚠️ Make sure the AnDiX bot role is at the top of the Server Roles hierarchy and has Administrator permission.
+              🛡️ Safe Setup Guarantee: AnDiX will preview recommended additions before anything is created.
             </p>
+          </div>
+
+          <!-- Smart Setup Audit Modal -->
+          <div id="smart-setup-modal" class="modal-overlay hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
+            <div class="card" style="max-width:580px;width:100%;border-radius:16px;border:1px solid rgba(153,69,255,0.4);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:14px;">
+                <h3 style="font-family:var(--font-heading);font-size:18px;color:#fff;display:flex;align-items:center;gap:8px;">
+                  <i class="fa-solid fa-server" style="color:var(--primary);"></i> Server Setup Audit
+                </h3>
+                <button onclick="closeSmartSetupModal()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">&times;</button>
+              </div>
+
+              <div id="audit-loading-state" style="text-align:center;padding:30px 0;">
+                <div class="loader-spinner-ring" style="margin:0 auto 16px;width:40px;height:40px;"></div>
+                <p style="color:var(--text-muted);font-size:13px;">Analyzing your Discord server structure...</p>
+              </div>
+
+              <div id="audit-results-state" style="display:none;">
+                <div style="background:rgba(0,255,163,0.08);border:1px solid rgba(0,255,163,0.3);border-radius:10px;padding:14px;margin-bottom:16px;">
+                  <div style="color:#00FFA3;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;">
+                    <i class="fa-solid fa-circle-check"></i> Safe Audit Analysis Completed
+                  </div>
+                  <p id="audit-summary-text" style="color:var(--text-main);font-size:13px;margin:6px 0 0 0;">
+                    Your server already has existing channels and roles.
+                  </p>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                  <strong style="color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Recommended Additions (Missing):</strong>
+                  <div id="audit-missing-list" style="max-height:180px;overflow-y:auto;margin-top:8px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:8px;padding:12px;font-size:13px;">
+                    <!-- Injected via JS -->
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:12px;">
+                  <button class="btn btn-stream btn-block" onclick="applySafeSetup()" id="btn-apply-safe">
+                    <i class="fa-solid fa-plus"></i> ADD RECOMMENDED ITEMS ONLY
+                  </button>
+                  <button class="btn btn-outline-sm" onclick="closeSmartSetupModal()" style="padding:10px 18px;">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Tab: Stream Alert -->
@@ -833,24 +887,89 @@ async function linkServer() {
   }
 }
 
-async function autoSetup() {
-  const token = localStorage.getItem('andix_token');
-  if (!linkedServerId) return showToast('Link a server first!', 'error');
-  if (!confirm('This will create roles, categories, and channels in your server. Continue?')) return;
+let currentAuditData = null;
+
+function closeSmartSetupModal() {
+  const modal = document.getElementById('smart-setup-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function openSmartSetupModal() {
+  if (!linkedServerId) return showToast('Please select or link a server first!', 'error');
+
+  const modal = document.getElementById('smart-setup-modal');
+  const loading = document.getElementById('audit-loading-state');
+  const results = document.getElementById('audit-results-state');
+
+  modal.style.display = 'flex';
+  loading.style.display = 'block';
+  results.style.display = 'none';
+
   try {
-    const res = await fetch(`${API}/api/client/auto-setup`, {
+    const res = await fetch(`${API}/api/guild/${linkedServerId}/audit-analysis`);
+    const data = await res.json();
+    currentAuditData = data;
+
+    loading.style.display = 'none';
+    results.style.display = 'block';
+
+    const summaryText = document.getElementById('audit-summary-text');
+    const missingList = document.getElementById('audit-missing-list');
+    const btnApply = document.getElementById('btn-apply-safe');
+
+    summaryText.innerHTML = `
+      Your server <strong>"${data.serverName}"</strong> currently has 
+      <strong>${data.totalExistingChannels} channels</strong> and 
+      <strong>${data.totalExistingRoles} roles</strong>. None of these will be modified or deleted.
+    `;
+
+    const allMissing = [];
+    (data.missingRoles || []).forEach(r => allMissing.push(`<div style="padding:4px 0;display:flex;align-items:center;gap:6px;color:#D8B4FE;"><i class="fa-solid fa-crown" style="font-size:11px;"></i> Role: <strong>${r}</strong></div>`));
+    (data.missingChannels || []).forEach(ch => allMissing.push(`<div style="padding:4px 0;display:flex;align-items:center;gap:6px;color:#00FFA3;"><i class="fa-solid fa-hashtag" style="font-size:11px;"></i> Channel: <strong>${ch.name}</strong> (${ch.category})</div>`));
+
+    if (allMissing.length === 0) {
+      missingList.innerHTML = `<p style="color:#00FFA3;margin:0;"><i class="fa-solid fa-check"></i> Great job! Your server already has all recommended streamer roles and channels.</p>`;
+      btnApply.disabled = true;
+      btnApply.style.opacity = '0.5';
+      btnApply.innerHTML = `<i class="fa-solid fa-check"></i> Already Fully Setup!`;
+    } else {
+      missingList.innerHTML = allMissing.join('');
+      btnApply.disabled = false;
+      btnApply.style.opacity = '1';
+      btnApply.innerHTML = `<i class="fa-solid fa-plus"></i> ADD ${allMissing.length} RECOMMENDED ITEMS ONLY`;
+    }
+  } catch (err) {
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    document.getElementById('audit-summary-text').innerHTML = `<span style="color:var(--danger);">Error analyzing server structure: ${err.message}</span>`;
+  }
+}
+
+async function applySafeSetup() {
+  const token = localStorage.getItem('andix_token');
+  if (!linkedServerId) return showToast('Please select a server first', 'error');
+
+  const btnApply = document.getElementById('btn-apply-safe');
+  btnApply.disabled = true;
+  btnApply.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Adding Recommended Items...`;
+
+  try {
+    const res = await fetch(`${API}/api/guild/${linkedServerId}/build-missing-only`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ serverId: linkedServerId })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
     if (data.success) {
-      showToast('Server setup complete! Check your Discord.', 'success');
+      showToast('Safe setup completed! Created only recommended items without modifying existing ones.', 'success');
+      closeSmartSetupModal();
     } else {
-      showToast(data.message || 'Setup failed', 'error');
+      showToast(data.error || 'Failed to complete setup', 'error');
     }
   } catch(e) {
-    showToast('Error running setup', 'error');
+    showToast('Error applying setup', 'error');
+  } finally {
+    btnApply.disabled = false;
+    btnApply.innerHTML = `<i class="fa-solid fa-plus"></i> ADD RECOMMENDED ITEMS ONLY`;
   }
 }
 
