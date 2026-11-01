@@ -363,10 +363,6 @@ const serverArchitect = {
 
     return result;
   }
-
-    logger.success(`1-Click Server Setup completed for ${guild.name}!`);
-    return result;
-  }
 };
 
 module.exports = serverArchitect;
